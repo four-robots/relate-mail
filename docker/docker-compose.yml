@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+      target: api
+    environment:
+      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - Oidc__Authority=${OIDC_AUTHORITY:-}
+      - Oidc__Audience=${OIDC_AUDIENCE:-}
+      - Cors__AllowedOrigins__0=http://localhost:3000
+    volumes:
+      - db-data:/data
+    networks:
+      - relate-network
+    restart: unless-stopped
+
+  smtp:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+      target: smtp
+    environment:
+      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - Smtp__ServerName=${SMTP_SERVER_NAME:-localhost}
+      - Smtp__Port=587
+      - Smtp__RequireAuthentication=true
+      - Smtp__Username=${SMTP_USERNAME:-smtp-user}
+      - Smtp__Password=${SMTP_PASSWORD:-change-this-password}
+    ports:
+      - "587:587"
+      - "465:465"
+    volumes:
+      - db-data:/data
+    networks:
+      - relate-network
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - relate-network
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  relate-network:
+    driver: bridge

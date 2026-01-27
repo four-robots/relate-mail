@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Relate.Smtp.Api/Relate.Smtp.Api.csproj" />
+    <Project Path="src/Relate.Smtp.Core/Relate.Smtp.Core.csproj" />
+    <Project Path="src/Relate.Smtp.Infrastructure/Relate.Smtp.Infrastructure.csproj" />
+    <Project Path="src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj" />
+  </Folder>
+</Solution>

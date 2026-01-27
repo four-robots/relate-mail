@@ -1,0 +1,64 @@
+export interface EmailListItem {
+  id: string
+  messageId: string
+  fromAddress: string
+  fromDisplayName: string | null
+  subject: string
+  receivedAt: string
+  sizeBytes: number
+  isRead: boolean
+  attachmentCount: number
+}
+
+export interface EmailRecipient {
+  id: string
+  address: string
+  displayName: string | null
+  type: 'To' | 'Cc' | 'Bcc'
+}
+
+export interface EmailAttachment {
+  id: string
+  fileName: string
+  contentType: string
+  sizeBytes: number
+}
+
+export interface EmailDetail {
+  id: string
+  messageId: string
+  fromAddress: string
+  fromDisplayName: string | null
+  subject: string
+  textBody: string | null
+  htmlBody: string | null
+  receivedAt: string
+  sizeBytes: number
+  isRead: boolean
+  recipients: EmailRecipient[]
+  attachments: EmailAttachment[]
+}
+
+export interface EmailListResponse {
+  items: EmailListItem[]
+  totalCount: number
+  unreadCount: number
+  page: number
+  pageSize: number
+}
+
+export interface EmailAddress {
+  id: string
+  address: string
+  isVerified: boolean
+  addedAt: string
+}
+
+export interface Profile {
+  id: string
+  email: string
+  displayName: string | null
+  createdAt: string
+  lastLoginAt: string | null
+  additionalAddresses: EmailAddress[]
+}
