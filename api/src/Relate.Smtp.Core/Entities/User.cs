@@ -12,4 +12,5 @@ public class User
 
     public ICollection<UserEmailAddress> AdditionalAddresses { get; set; } = new List<UserEmailAddress>();
     public ICollection<EmailRecipient> ReceivedEmails { get; set; } = new List<EmailRecipient>();
+    public ICollection<SmtpApiKey> SmtpApiKeys { get; set; } = new List<SmtpApiKey>();
 }

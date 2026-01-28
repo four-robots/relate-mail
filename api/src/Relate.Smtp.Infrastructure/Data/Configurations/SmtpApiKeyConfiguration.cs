@@ -1,0 +1,29 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Relate.Smtp.Core.Entities;
+
+namespace Relate.Smtp.Infrastructure.Data.Configurations;
+
+public class SmtpApiKeyConfiguration : IEntityTypeConfiguration<SmtpApiKey>
+{
+    public void Configure(EntityTypeBuilder<SmtpApiKey> builder)
+    {
+        builder.HasKey(k => k.Id);
+
+        builder.Property(k => k.Name)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(k => k.KeyHash)
+            .HasMaxLength(128)
+            .IsRequired();
+
+        builder.HasIndex(k => k.UserId);
+        builder.HasIndex(k => k.RevokedAt);
+
+        builder.HasOne(k => k.User)
+            .WithMany(u => u.SmtpApiKeys)
+            .HasForeignKey(k => k.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}

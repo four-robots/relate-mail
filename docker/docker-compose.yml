@@ -27,8 +27,6 @@ services:
       - Smtp__ServerName=${SMTP_SERVER_NAME:-localhost}
       - Smtp__Port=587
       - Smtp__RequireAuthentication=true
-      - Smtp__Username=${SMTP_USERNAME:-smtp-user}
-      - Smtp__Password=${SMTP_PASSWORD:-change-this-password}
     ports:
       - "587:587"
       - "465:465"

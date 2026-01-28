@@ -62,3 +62,35 @@ export interface Profile {
   lastLoginAt: string | null
   additionalAddresses: EmailAddress[]
 }
+
+export interface SmtpApiKey {
+  id: string
+  name: string
+  createdAt: string
+  lastUsedAt: string | null
+  isActive: boolean
+}
+
+export interface SmtpConnectionInfo {
+  server: string
+  port: number
+  securePort: number
+  username: string
+  activeKeyCount: number
+}
+
+export interface CreateApiKeyRequest {
+  name: string
+}
+
+export interface CreatedApiKey {
+  id: string
+  name: string
+  apiKey: string
+  createdAt: string
+}
+
+export interface SmtpCredentials {
+  connectionInfo: SmtpConnectionInfo
+  keys: SmtpApiKey[]
+}

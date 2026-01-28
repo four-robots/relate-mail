@@ -13,6 +13,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddScoped<UserProvisioningService>();
+builder.Services.AddScoped<SmtpCredentialService>();
 
 // Configure OIDC/JWT authentication
 var oidcAuthority = builder.Configuration["Oidc:Authority"];

@@ -36,6 +36,14 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
     }
 
+    public async Task<User?> GetByEmailWithApiKeysAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = email.ToLowerInvariant();
+        return await _context.Users
+            .Include(u => u.SmtpApiKeys.Where(k => k.RevokedAt == null))
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, cancellationToken);
+    }
+
     public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)
     {
         _context.Users.Add(user);

@@ -11,11 +11,32 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite(connectionString));
+        {
+            if (IsPostgreSqlConnectionString(connectionString))
+            {
+                options.UseNpgsql(connectionString);
+            }
+            else
+            {
+                options.UseSqlite(connectionString);
+            }
+        });
 
         services.AddScoped<IEmailRepository, EmailRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ISmtpApiKeyRepository, SmtpApiKeyRepository>();
 
         return services;
+    }
+
+    private static bool IsPostgreSqlConnectionString(string connectionString)
+    {
+        var lowerConnectionString = connectionString.ToLowerInvariant();
+        return lowerConnectionString.Contains("host=") ||
+               lowerConnectionString.Contains("server=") && (
+                   lowerConnectionString.Contains("port=5432") ||
+                   lowerConnectionString.Contains("database=") ||
+                   lowerConnectionString.Contains("user id=") ||
+                   lowerConnectionString.Contains("username="));
     }
 }

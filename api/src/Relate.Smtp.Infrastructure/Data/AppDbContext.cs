@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<EmailAttachment> EmailAttachments => Set<EmailAttachment>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserEmailAddress> UserEmailAddresses => Set<UserEmailAddress>();
+    public DbSet<SmtpApiKey> SmtpApiKeys => Set<SmtpApiKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -87,8 +87,7 @@ public class SmtpServerHostedService : BackgroundService
 
     private IUserAuthenticator CreateUserAuthenticator()
     {
-        var configuration = _serviceProvider.GetRequiredService<IConfiguration>();
         var logger = _serviceProvider.GetRequiredService<ILogger<CustomUserAuthenticator>>();
-        return new CustomUserAuthenticator(configuration, logger);
+        return new CustomUserAuthenticator(_serviceProvider, logger);
     }
 }

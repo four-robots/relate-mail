@@ -30,6 +30,12 @@ function RootComponent() {
                 >
                   Profile
                 </Link>
+                <Link
+                  to="/smtp-settings"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors [&.active]:text-foreground"
+                >
+                  SMTP Settings
+                </Link>
               </nav>
             </div>
             <div className="flex items-center gap-2">

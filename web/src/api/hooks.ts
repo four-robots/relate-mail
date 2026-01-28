@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { EmailListResponse, EmailDetail, Profile, EmailAddress } from './types'
+import type { EmailListResponse, EmailDetail, Profile, EmailAddress, SmtpCredentials, CreateApiKeyRequest, CreatedApiKey } from './types'
 
 // Email hooks
 export function useEmails(page = 1, pageSize = 20) {
@@ -82,6 +82,38 @@ export function useRemoveEmailAddress() {
       api.delete(`/profile/addresses/${addressId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
+    },
+  })
+}
+
+// SMTP Credentials hooks
+export function useSmtpCredentials() {
+  return useQuery({
+    queryKey: ['smtp-credentials'],
+    queryFn: () => api.get<SmtpCredentials>('/smtp-credentials'),
+  })
+}
+
+export function useCreateSmtpApiKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: CreateApiKeyRequest) =>
+      api.post<CreatedApiKey>('/smtp-credentials', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['smtp-credentials'] })
+    },
+  })
+}
+
+export function useRevokeSmtpApiKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (keyId: string) =>
+      api.delete(`/smtp-credentials/${keyId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['smtp-credentials'] })
     },
   })
 }
