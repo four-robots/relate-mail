@@ -36,6 +36,28 @@ services:
       - relate-network
     restart: unless-stopped
 
+  pop3:
+    build:
+      context: ../api
+      dockerfile: Dockerfile
+      target: pop3
+    environment:
+      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - Pop3__ServerName=${POP3_SERVER_NAME:-localhost}
+      - Pop3__Port=110
+      - Pop3__SecurePort=995
+      - Pop3__RequireAuthentication=true
+    ports:
+      - "110:110"
+      - "995:995"
+    volumes:
+      - db-data:/data
+    networks:
+      - relate-network
+    restart: unless-stopped
+    depends_on:
+      - api
+
   web:
     build:
       context: ../web

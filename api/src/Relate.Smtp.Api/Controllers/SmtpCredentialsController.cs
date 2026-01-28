@@ -36,9 +36,12 @@ public class SmtpCredentialsController : ControllerBase
         var keys = await _apiKeyRepository.GetActiveKeysForUserAsync(user.Id, cancellationToken);
 
         var connectionInfo = new SmtpConnectionInfoDto(
-            Server: _configuration["Smtp:ServerName"] ?? "localhost",
-            Port: int.Parse(_configuration["Smtp:Port"] ?? "587"),
-            SecurePort: int.Parse(_configuration["Smtp:SecurePort"] ?? "465"),
+            SmtpServer: _configuration["Smtp:ServerName"] ?? "localhost",
+            SmtpPort: int.Parse(_configuration["Smtp:Port"] ?? "587"),
+            SmtpSecurePort: int.Parse(_configuration["Smtp:SecurePort"] ?? "465"),
+            Pop3Server: _configuration["Pop3:ServerName"] ?? "localhost",
+            Pop3Port: int.Parse(_configuration["Pop3:Port"] ?? "110"),
+            Pop3SecurePort: int.Parse(_configuration["Pop3:SecurePort"] ?? "995"),
             Username: user.Email,
             ActiveKeyCount: keys.Count
         );

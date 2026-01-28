@@ -18,9 +18,12 @@ public record CreatedSmtpApiKeyDto(
 );
 
 public record SmtpConnectionInfoDto(
-    string Server,
-    int Port,
-    int SecurePort,
+    string SmtpServer,
+    int SmtpPort,
+    int SmtpSecurePort,
+    string Pop3Server,
+    int Pop3Port,
+    int Pop3SecurePort,
     string Username,
     int ActiveKeyCount
 );

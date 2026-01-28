@@ -91,22 +91,48 @@ function SmtpSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Server</label>
-                <p className="mt-1 font-mono text-sm">{connectionInfo.server}</p>
+            <div>
+              <h4 className="font-medium mb-2">Outgoing Mail (SMTP)</h4>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Server</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpServer}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpPort}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpSecurePort}</p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
-                <p className="mt-1 font-mono text-sm">{connectionInfo.port}</p>
+
+              <h4 className="font-medium mb-2">Incoming Mail (POP3)</h4>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Server</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Server}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Port</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Port}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3SecurePort}</p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                <p className="mt-1 font-mono text-sm">{connectionInfo.securePort}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Username</label>
-                <p className="mt-1 font-mono text-sm">{connectionInfo.username}</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Username</label>
+                  <p className="mt-1 font-mono text-sm">{connectionInfo.username}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Password</label>
+                  <p className="mt-1 text-sm text-muted-foreground">Use generated API key</p>
+                </div>
               </div>
             </div>
 
@@ -246,12 +272,23 @@ function SmtpSettingsPage() {
 
             <div className="bg-muted rounded p-3 space-y-2">
               <p className="text-sm font-medium">Email Client Configuration:</p>
-              <ul className="text-sm space-y-1 list-disc list-inside">
-                <li>Server: {connectionInfo.server}</li>
-                <li>Port: {connectionInfo.port} (STARTTLS)</li>
-                <li>Username: {connectionInfo.username}</li>
-                <li>Password: (the API key above)</li>
-              </ul>
+              <div className="text-sm space-y-1">
+                <p className="font-medium">Outgoing (SMTP):</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li>Server: {connectionInfo.smtpServer}</li>
+                  <li>Port: {connectionInfo.smtpPort} (STARTTLS)</li>
+                </ul>
+                <p className="font-medium mt-2">Incoming (POP3):</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li>Server: {connectionInfo.pop3Server}</li>
+                  <li>Port: {connectionInfo.pop3Port}</li>
+                </ul>
+                <p className="font-medium mt-2">Authentication:</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li>Username: {connectionInfo.username}</li>
+                  <li>Password: (the API key above)</li>
+                </ul>
+              </div>
             </div>
           </div>
 

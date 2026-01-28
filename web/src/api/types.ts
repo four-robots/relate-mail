@@ -72,9 +72,12 @@ export interface SmtpApiKey {
 }
 
 export interface SmtpConnectionInfo {
-  server: string
-  port: number
-  securePort: number
+  smtpServer: string
+  smtpPort: number
+  smtpSecurePort: number
+  pop3Server: string
+  pop3Port: number
+  pop3SecurePort: number
   username: string
   activeKeyCount: number
 }
