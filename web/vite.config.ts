@@ -41,6 +41,13 @@ export default defineConfig(({ mode }) => {
             });
           },
         },
+        // Proxy config.json to backend API for dynamic runtime config
+        '/config/config.json': {
+          target: proxyTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/config/, ''),
+        },
       },
     },
   }
