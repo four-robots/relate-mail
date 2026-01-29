@@ -1,16 +1,17 @@
 version: '3.8'
 
+# This docker-compose file uses pre-built images from GitHub Container Registry
+# Usage: docker compose -f docker-compose.ghcr.yml up
+
 services:
   api:
-    build:
-      context: ../api
-      dockerfile: Dockerfile
-      target: api
+    image: ghcr.io/${GITHUB_REPOSITORY:-tyevco/relate-smtp}-api:${IMAGE_TAG:-latest}
     environment:
       - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
       - Oidc__Authority=${OIDC_AUTHORITY:-}
       - Oidc__Audience=${OIDC_AUDIENCE:-}
       - Cors__AllowedOrigins__0=http://localhost:3000
+      - Cors__AllowedOrigins__1=http://localhost:80
     volumes:
       - db-data:/data
     networks:
@@ -18,14 +19,12 @@ services:
     restart: unless-stopped
 
   smtp:
-    build:
-      context: ../api
-      dockerfile: Dockerfile
-      target: smtp
+    image: ghcr.io/${GITHUB_REPOSITORY:-tyevco/relate-smtp}-smtp:${IMAGE_TAG:-latest}
     environment:
       - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
       - Smtp__ServerName=${SMTP_SERVER_NAME:-localhost}
       - Smtp__Port=587
+      - Smtp__SecurePort=465
       - Smtp__RequireAuthentication=true
     ports:
       - "587:587"
@@ -35,12 +34,11 @@ services:
     networks:
       - relate-network
     restart: unless-stopped
+    depends_on:
+      - api
 
   pop3:
-    build:
-      context: ../api
-      dockerfile: Dockerfile
-      target: pop3
+    image: ghcr.io/${GITHUB_REPOSITORY:-tyevco/relate-smtp}-pop3:${IMAGE_TAG:-latest}
     environment:
       - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
       - Pop3__ServerName=${POP3_SERVER_NAME:-localhost}
@@ -59,10 +57,7 @@ services:
       - api
 
   web:
-    build:
-      context: ../web
-      dockerfile: Dockerfile
-      target: production
+    image: ghcr.io/${GITHUB_REPOSITORY:-tyevco/relate-smtp}-web:${IMAGE_TAG:-latest}
     environment:
       - OIDC_AUTHORITY=${OIDC_AUTHORITY:-}
       - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-}

@@ -8,4 +8,19 @@ public interface ISmtpApiKeyRepository
     Task<SmtpApiKey> CreateAsync(SmtpApiKey key, CancellationToken ct = default);
     Task RevokeAsync(Guid keyId, CancellationToken ct = default);
     Task UpdateLastUsedAsync(Guid keyId, DateTimeOffset lastUsed, CancellationToken ct = default);
+
+    /// <summary>
+    /// Find active API key by raw key value and verify it has required scope
+    /// </summary>
+    Task<SmtpApiKey?> GetByKeyWithScopeAsync(string rawKey, string requiredScope, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Parse scopes from JSON array string
+    /// </summary>
+    IReadOnlyList<string> ParseScopes(string scopesJson);
+
+    /// <summary>
+    /// Check if key has specific scope
+    /// </summary>
+    bool HasScope(SmtpApiKey key, string scope);
 }

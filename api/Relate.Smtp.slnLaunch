@@ -1,0 +1,22 @@
+[
+  {
+    "Name": "Launch",
+    "Projects": [
+      {
+        "Path": "src\\Relate.Smtp.Api\\Relate.Smtp.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      },
+      {
+        "Path": "src\\Relate.Smtp.SmtpHost\\Relate.Smtp.SmtpHost.csproj",
+        "Action": "Start",
+        "DebugTarget": "Relate.Smtp.SmtpHost"
+      },
+      {
+        "Path": "src\\Relate.Smtp.Pop3Host\\Relate.Smtp.Pop3Host.csproj",
+        "Action": "Start",
+        "DebugTarget": "Relate.Smtp.Pop3Host"
+      }
+    ]
+  }
+]

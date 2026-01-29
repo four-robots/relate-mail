@@ -38,6 +38,7 @@ public class Pop3UserAuthenticator
         // Create scoped container for DB access
         using var scope = _serviceProvider.CreateScope();
         var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+        var apiKeyRepo = scope.ServiceProvider.GetRequiredService<ISmtpApiKeyRepository>();
 
         var user = await userRepo.GetByEmailWithApiKeysAsync(normalizedEmail, ct);
         if (user == null)
@@ -52,6 +53,14 @@ public class Pop3UserAuthenticator
         {
             if (BCrypt.Net.BCrypt.Verify(password, apiKey.KeyHash))
             {
+                // Check if key has pop3 scope
+                if (!apiKeyRepo.HasScope(apiKey, "pop3"))
+                {
+                    _logger.LogWarning("POP3 authentication failed for {Email} - API key {KeyName} lacks 'pop3' scope", username, apiKey.Name);
+                    CacheResult(cacheKey, false, null, Guid.Empty);
+                    return (false, null);
+                }
+
                 _logger.LogInformation("POP3 user authenticated: {Email} using key: {KeyName}", username, apiKey.Name);
                 CacheResult(cacheKey, true, user.Id, apiKey.Id);
                 _ = UpdateLastUsedAsync(apiKey.Id); // Background update

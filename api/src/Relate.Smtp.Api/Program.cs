@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Relate.Smtp.Api.Authentication;
 using Relate.Smtp.Api.Hubs;
 using Relate.Smtp.Api.Services;
 using Relate.Smtp.Infrastructure;
@@ -41,7 +42,8 @@ if (!string.IsNullOrEmpty(oidcAuthority))
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true
             };
-        });
+        })
+        .AddApiKeyAuthentication();
 }
 else
 {
@@ -57,7 +59,8 @@ else
                 ValidateIssuerSigningKey = false,
                 RequireSignedTokens = false
             };
-        });
+        })
+        .AddApiKeyAuthentication();
 }
 
 builder.Services.AddAuthorization();

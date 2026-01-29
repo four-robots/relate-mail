@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Relate.Smtp.Api.Models;
@@ -51,7 +52,8 @@ public class SmtpCredentialsController : ControllerBase
             k.Name,
             k.CreatedAt,
             k.LastUsedAt,
-            k.RevokedAt == null
+            k.RevokedAt == null,
+            _apiKeyRepository.ParseScopes(k.Scopes)
         )).ToList();
 
         return Ok(new SmtpCredentialsDto(connectionInfo, keyDtos));
@@ -72,6 +74,21 @@ public class SmtpCredentialsController : ControllerBase
             return BadRequest(new { error = "Name must be 100 characters or less" });
         }
 
+        // Validate and normalize scopes
+        var scopes = request.Scopes ?? ApiKeyScopes.AllScopes.ToList();
+        if (scopes.Count == 0)
+        {
+            scopes = ApiKeyScopes.AllScopes.ToList(); // Default to all
+        }
+
+        foreach (var scope in scopes)
+        {
+            if (!ApiKeyScopes.IsValidScope(scope))
+            {
+                return BadRequest(new { error = $"Invalid scope: {scope}. Valid scopes are: {string.Join(", ", ApiKeyScopes.AllScopes)}" });
+            }
+        }
+
         var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
 
         var apiKey = _credentialService.GenerateApiKey();
@@ -83,6 +100,7 @@ public class SmtpCredentialsController : ControllerBase
             UserId = user.Id,
             Name = request.Name,
             KeyHash = keyHash,
+            Scopes = JsonSerializer.Serialize(scopes),
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -92,6 +110,7 @@ public class SmtpCredentialsController : ControllerBase
             smtpApiKey.Id,
             smtpApiKey.Name,
             apiKey,
+            scopes,
             smtpApiKey.CreatedAt
         ));
     }

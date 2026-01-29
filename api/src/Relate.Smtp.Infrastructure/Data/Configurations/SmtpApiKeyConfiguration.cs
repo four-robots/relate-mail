@@ -18,6 +18,11 @@ public class SmtpApiKeyConfiguration : IEntityTypeConfiguration<SmtpApiKey>
             .HasMaxLength(128)
             .IsRequired();
 
+        builder.Property(k => k.Scopes)
+            .HasMaxLength(500)
+            .IsRequired()
+            .HasDefaultValue("[]");
+
         builder.HasIndex(k => k.UserId);
         builder.HasIndex(k => k.RevokedAt);
 

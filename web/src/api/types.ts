@@ -69,6 +69,7 @@ export interface SmtpApiKey {
   createdAt: string
   lastUsedAt: string | null
   isActive: boolean
+  scopes: string[]
 }
 
 export interface SmtpConnectionInfo {
@@ -84,12 +85,14 @@ export interface SmtpConnectionInfo {
 
 export interface CreateApiKeyRequest {
   name: string
+  scopes?: string[]
 }
 
 export interface CreatedApiKey {
   id: string
   name: string
   apiKey: string
+  scopes: string[]
   createdAt: string
 }
 

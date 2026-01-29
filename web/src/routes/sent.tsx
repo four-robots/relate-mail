@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useSentEmails, useSentFromAddresses } from '../api/hooks'
 import { EmailList } from '../components/mail/email-list'
@@ -9,6 +9,7 @@ export const Route = createFileRoute('/sent')({
 })
 
 function SentMailPage() {
+  const navigate = useNavigate()
   const [selectedFromAddress, setSelectedFromAddress] = useState<string | undefined>()
   const [page, setPage] = useState(1)
 
@@ -51,7 +52,10 @@ function SentMailPage() {
         <div className="text-center py-8">Loading...</div>
       ) : emails && emails.items.length > 0 ? (
         <>
-          <EmailList emails={emails.items} />
+          <EmailList
+            emails={emails.items}
+            onSelect={(id) => navigate({ to: `/emails/${id}` })}
+          />
 
           {/* Pagination */}
           {emails.totalCount > 20 && (

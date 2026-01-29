@@ -1,19 +1,45 @@
 namespace Relate.Smtp.Api.Models;
 
+public static class ApiKeyScopes
+{
+    public const string Smtp = "smtp";
+    public const string Pop3 = "pop3";
+    public const string ApiRead = "api:read";
+    public const string ApiWrite = "api:write";
+
+    public static readonly string[] AllScopes = { Smtp, Pop3, ApiRead, ApiWrite };
+
+    public static bool IsValidScope(string scope)
+    {
+        return AllScopes.Contains(scope, StringComparer.OrdinalIgnoreCase);
+    }
+}
+
 public record SmtpApiKeyDto(
     Guid Id,
     string Name,
     DateTimeOffset CreatedAt,
     DateTimeOffset? LastUsedAt,
-    bool IsActive
+    bool IsActive,
+    IReadOnlyList<string> Scopes
 );
 
-public record CreateSmtpApiKeyRequest(string Name);
+public record CreateSmtpApiKeyRequest
+{
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// Permission scopes for this key. Valid values: smtp, pop3, api:read, api:write
+    /// If empty or null, defaults to all scopes for backward compatibility.
+    /// </summary>
+    public List<string>? Scopes { get; init; }
+}
 
 public record CreatedSmtpApiKeyDto(
     Guid Id,
     string Name,
     string ApiKey,
+    IReadOnlyList<string> Scopes,
     DateTimeOffset CreatedAt
 );
 

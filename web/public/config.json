@@ -1,0 +1,6 @@
+{
+  "oidcAuthority": "",
+  "oidcClientId": "",
+  "oidcRedirectUri": "",
+  "oidcScope": "openid profile email"
+}

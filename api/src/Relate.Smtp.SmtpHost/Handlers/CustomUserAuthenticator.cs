@@ -69,6 +69,14 @@ public class CustomUserAuthenticator : IUserAuthenticator
         {
             if (BCrypt.Net.BCrypt.Verify(password, apiKey.KeyHash))
             {
+                // Check if key has smtp scope
+                if (!apiKeyRepository.HasScope(apiKey, "smtp"))
+                {
+                    _logger.LogWarning("SMTP authentication failed for {User} - API key {KeyName} lacks 'smtp' scope", user, apiKey.Name);
+                    CacheResult(cacheKey, Guid.Empty, false);
+                    return false;
+                }
+
                 _logger.LogInformation("SMTP user authenticated: {User} using key: {KeyName}", user, apiKey.Name);
 
                 // Store authenticated user info in session context for later use

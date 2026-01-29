@@ -29,15 +29,24 @@ function SmtpSettingsPage() {
     }
   }, [auth.isAuthenticated, auth.isLoading])
   const [keyName, setKeyName] = useState('')
-  const [createdKey, setCreatedKey] = useState<{ apiKey: string; name: string } | null>(null)
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(['smtp', 'pop3', 'api:read', 'api:write'])
+  const [createdKey, setCreatedKey] = useState<{ apiKey: string; name: string; scopes: string[] } | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
 
+  const scopeOptions = [
+    { value: 'smtp', label: 'SMTP', description: 'Send emails via SMTP server' },
+    { value: 'pop3', label: 'POP3', description: 'Retrieve emails via POP3 server' },
+    { value: 'api:read', label: 'API Read', description: 'Read emails via REST API' },
+    { value: 'api:write', label: 'API Write', description: 'Modify/delete emails via REST API' }
+  ]
+
   const handleCreateKey = () => {
-    if (keyName.trim()) {
-      createKey.mutate({ name: keyName.trim() }, {
+    if (keyName.trim() && selectedScopes.length > 0) {
+      createKey.mutate({ name: keyName.trim(), scopes: selectedScopes }, {
         onSuccess: (data) => {
-          setCreatedKey({ apiKey: data.apiKey, name: data.name })
+          setCreatedKey({ apiKey: data.apiKey, name: data.name, scopes: data.scopes })
           setKeyName('')
+          setSelectedScopes(['smtp', 'pop3', 'api:read', 'api:write'])
           setIsCreatingKey(false)
         },
       })
@@ -170,19 +179,55 @@ function SmtpSettingsPage() {
             <div className="space-y-2">
               {/* Create key form */}
               {isCreatingKey && (
-                <div className="flex gap-2 p-4 rounded border bg-muted/50">
-                  <Input
-                    value={keyName}
-                    onChange={(e) => setKeyName(e.target.value)}
-                    placeholder="Key name (e.g., Work Laptop, iPhone)"
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateKey()}
-                  />
-                  <Button onClick={handleCreateKey} disabled={createKey.isPending || !keyName.trim()}>
-                    Create
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsCreatingKey(false)}>
-                    Cancel
-                  </Button>
+                <div className="p-4 rounded border bg-muted/50 space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Key Name</label>
+                    <Input
+                      value={keyName}
+                      onChange={(e) => setKeyName(e.target.value)}
+                      placeholder="Key name (e.g., Work Laptop, iPhone)"
+                      onKeyDown={(e) => e.key === 'Enter' && selectedScopes.length > 0 && handleCreateKey()}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Permissions</label>
+                    <div className="space-y-2">
+                      {scopeOptions.map(scope => (
+                        <label key={scope.value} className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedScopes.includes(scope.value)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedScopes([...selectedScopes, scope.value])
+                              } else {
+                                setSelectedScopes(selectedScopes.filter(s => s !== scope.value))
+                              }
+                            }}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{scope.label}</div>
+                            <div className="text-xs text-muted-foreground">{scope.description}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleCreateKey} disabled={createKey.isPending || !keyName.trim() || selectedScopes.length === 0}>
+                      Create
+                    </Button>
+                    <Button variant="outline" onClick={() => {
+                      setIsCreatingKey(false)
+                      setKeyName('')
+                      setSelectedScopes(['smtp', 'pop3', 'api:read', 'api:write'])
+                    }}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -200,6 +245,13 @@ function SmtpSettingsPage() {
                             <> • Last used {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}</>
                           )}
                         </p>
+                        <div className="flex gap-1 mt-1">
+                          {key.scopes.map(scope => (
+                            <span key={scope} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                              {scope}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <Button
@@ -239,6 +291,17 @@ function SmtpSettingsPage() {
             <div>
               <label className="text-sm font-medium">Key Name</label>
               <p className="mt-1 text-sm">{createdKey?.name}</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Permissions</label>
+              <div className="flex gap-1 mt-1">
+                {createdKey?.scopes.map(scope => (
+                  <span key={scope} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                    {scope}
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div>

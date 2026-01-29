@@ -22,6 +22,13 @@ RUN dotnet publish src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj -c Relea
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
 WORKDIR /app
 COPY --from=build /app/api .
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate SMTP API"
+LABEL org.opencontainers.image.description="REST API for Relate SMTP email management"
+LABEL org.opencontainers.image.vendor="Relate SMTP"
+LABEL org.opencontainers.image.source="https://github.com/tyevco/relate-smtp"
+
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 ENTRYPOINT ["dotnet", "Relate.Smtp.Api.dll"]
@@ -30,6 +37,13 @@ ENTRYPOINT ["dotnet", "Relate.Smtp.Api.dll"]
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS smtp
 WORKDIR /app
 COPY --from=build /app/smtp .
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate SMTP Server"
+LABEL org.opencontainers.image.description="SMTP server for receiving emails"
+LABEL org.opencontainers.image.vendor="Relate SMTP"
+LABEL org.opencontainers.image.source="https://github.com/tyevco/relate-smtp"
+
 EXPOSE 587 465
 ENTRYPOINT ["dotnet", "Relate.Smtp.SmtpHost.dll"]
 
@@ -37,5 +51,12 @@ ENTRYPOINT ["dotnet", "Relate.Smtp.SmtpHost.dll"]
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS pop3
 WORKDIR /app
 COPY --from=build /app/pop3 .
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate POP3 Server"
+LABEL org.opencontainers.image.description="POP3 server for retrieving emails"
+LABEL org.opencontainers.image.vendor="Relate SMTP"
+LABEL org.opencontainers.image.source="https://github.com/tyevco/relate-smtp"
+
 EXPOSE 110 995
 ENTRYPOINT ["dotnet", "Relate.Smtp.Pop3Host.dll"]
