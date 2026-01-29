@@ -22,4 +22,46 @@
     <ProjectReference Include="..\Relate.Smtp.Infrastructure\Relate.Smtp.Infrastructure.csproj" />
   </ItemGroup>
 
+	<!-- Client App Integration -->
+	<PropertyGroup>
+		<ClientAppDir>$(MSBuildProjectDirectory)\..\..\..\web</ClientAppDir>
+		<ClientAppBuildDir>$(ClientAppDir)\dist</ClientAppBuildDir>
+		<SpaRoot>$(ClientAppDir)\</SpaRoot>
+		<DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Don't publish the SPA source files, but do show them in the project files list -->
+		<Content Remove="$(SpaRoot)**" />
+		<None Remove="$(SpaRoot)**" />
+		<None Include="$(SpaRoot)**" Link="clientapp\%(RecursiveDir)%(Filename)%(Extension)" Exclude="$(SpaRoot)node_modules\**;$(SpaRoot)test-results\**;$(SpaRoot)dist\**;$(SpaRoot).tanstack\**;$(SpaRoot)coverage\**;$(SpaRoot).vscode\**" />
+	</ItemGroup>
+
+	<!-- Build client app and copy to wwwroot before publish -->
+	<Target Name="BuildAndCopyClientApp" AfterTargets="ComputeFilesToPublish" Condition="'$(Configuration)' == 'Release' Or '$(PublishClientApp)' == 'true'">
+		<Message Importance="high" Text="Building client app in $(ClientAppDir)..." />
+
+		<!-- Install dependencies if node_modules doesn't exist -->
+		<Exec Command="npm install" WorkingDirectory="$(ClientAppDir)" Condition="!Exists('$(ClientAppDir)\node_modules')" />
+
+		<!-- Build the client app -->
+		<Exec Command="npm run build" WorkingDirectory="$(ClientAppDir)" />
+	</Target>
+
+	<Target Name="PrepareFiles">
+		<ItemGroup>
+			<ClientAppFiles Include="$(ClientAppDir)\dist\**\*" />
+			<PreparedFiles Include="@(ClientAppFiles)" Exclude="@(PreparedFiles)">
+				<RelativePath>%(ClientAppFiles.RecursiveDir)%(ClientAppFiles.FileName)%(ClientAppFiles.Extension)</RelativePath>
+			</PreparedFiles>
+		</ItemGroup>
+	</Target>
+
+	<Target Name="SetupPublish" DependsOnTargets="PrepareFiles" AfterTargets="ComputeFilesToPublish">
+		<ItemGroup>
+			<ResolvedFileToPublish Include="@(PreparedFiles->'%(FullPath)')" Exclude="@(ResolvedFileToPublish)">
+				<RelativePath>wwwroot/%(PreparedFiles.RelativePath)</RelativePath>
+			</ResolvedFileToPublish>
+		</ItemGroup>
+	</Target>
 </Project>
