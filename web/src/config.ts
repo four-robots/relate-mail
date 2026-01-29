@@ -21,22 +21,23 @@ export async function loadConfig(): Promise<AppConfig> {
     if (!response.ok) {
       throw new Error(`Failed to load config: ${response.statusText}`)
     }
-    config = await response.json()
+    const loadedConfig = await response.json() as AppConfig
 
     // Fallback to build-time env vars if config.json values are empty
-    if (!config.oidcAuthority) {
-      config.oidcAuthority = import.meta.env.VITE_OIDC_AUTHORITY || ''
+    if (!loadedConfig.oidcAuthority) {
+      loadedConfig.oidcAuthority = import.meta.env.VITE_OIDC_AUTHORITY || ''
     }
-    if (!config.oidcClientId) {
-      config.oidcClientId = import.meta.env.VITE_OIDC_CLIENT_ID || ''
+    if (!loadedConfig.oidcClientId) {
+      loadedConfig.oidcClientId = import.meta.env.VITE_OIDC_CLIENT_ID || ''
     }
-    if (!config.oidcRedirectUri) {
-      config.oidcRedirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI || window.location.origin
+    if (!loadedConfig.oidcRedirectUri) {
+      loadedConfig.oidcRedirectUri = import.meta.env.VITE_OIDC_REDIRECT_URI || window.location.origin
     }
-    if (!config.oidcScope) {
-      config.oidcScope = import.meta.env.VITE_OIDC_SCOPE || 'openid profile email'
+    if (!loadedConfig.oidcScope) {
+      loadedConfig.oidcScope = import.meta.env.VITE_OIDC_SCOPE || 'openid profile email'
     }
 
+    config = loadedConfig
     return config
   } catch (error) {
     console.error('Failed to load runtime config, falling back to build-time env vars:', error)
