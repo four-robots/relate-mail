@@ -1,0 +1,115 @@
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Download, Eye, File, X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import type { EmailAttachment } from '@/api/types'
+
+interface AttachmentPreviewProps {
+  emailId: string
+  attachment: EmailAttachment
+}
+
+export function AttachmentPreview({ emailId, attachment }: AttachmentPreviewProps) {
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+
+  const apiUrl = import.meta.env.VITE_API_URL || '/api'
+  const downloadUrl = `${apiUrl}/emails/${emailId}/attachments/${attachment.id}`
+
+  const isImage = attachment.contentType.startsWith('image/')
+  const isPdf = attachment.contentType === 'application/pdf'
+  const canPreview = isImage || isPdf
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const handleDownload = () => {
+    window.open(downloadUrl, '_blank')
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">{attachment.fileName}</div>
+            <div className="text-xs text-muted-foreground">
+              {formatFileSize(attachment.sizeBytes)} • {attachment.contentType}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-1 ml-2">
+          {canPreview && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPreviewOpen(true)}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              Preview
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={handleDownload}>
+            <Download className="h-4 w-4 mr-1" />
+            Download
+          </Button>
+        </div>
+      </div>
+
+      {/* Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span className="truncate mr-4">{attachment.fileName}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsPreviewOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="overflow-auto max-h-[calc(90vh-8rem)]">
+            {isImage && (
+              <img
+                src={downloadUrl}
+                alt={attachment.fileName}
+                className="max-w-full h-auto"
+              />
+            )}
+
+            {isPdf && (
+              <iframe
+                src={downloadUrl}
+                className="w-full h-[70vh] border-0"
+                title={attachment.fileName}
+              />
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={handleDownload}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}

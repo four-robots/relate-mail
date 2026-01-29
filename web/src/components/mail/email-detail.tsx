@@ -1,7 +1,8 @@
 import { format } from 'date-fns'
-import { ArrowLeft, Download, Paperclip, Trash2 } from 'lucide-react'
+import { ArrowLeft, Paperclip, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { AttachmentPreview } from './attachment-preview'
 import type { EmailDetail } from '@/api/types'
 
 interface EmailDetailViewProps {
@@ -11,14 +12,6 @@ interface EmailDetailViewProps {
 }
 
 export function EmailDetailView({ email, onBack, onDelete }: EmailDetailViewProps) {
-  const downloadAttachment = (attachmentId: string, fileName: string) => {
-    const url = `/api/emails/${email.id}/attachments/${attachmentId}`
-    const a = document.createElement('a')
-    a.href = url
-    a.download = fileName
-    a.click()
-  }
-
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 p-4 border-b">
@@ -64,24 +57,20 @@ export function EmailDetailView({ email, onBack, onDelete }: EmailDetailViewProp
         </div>
 
         {email.attachments.length > 0 && (
-          <div className="mb-4 p-3 bg-muted rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mb-4 space-y-2">
+            <div className="flex items-center gap-2">
               <Paperclip className="h-4 w-4" />
               <span className="text-sm font-medium">
                 {email.attachments.length} Attachment{email.attachments.length > 1 ? 's' : ''}
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-2">
               {email.attachments.map((attachment) => (
-                <Button
+                <AttachmentPreview
                   key={attachment.id}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => downloadAttachment(attachment.id, attachment.fileName)}
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  {attachment.fileName}
-                </Button>
+                  emailId={email.id}
+                  attachment={attachment}
+                />
               ))}
             </div>
           </div>

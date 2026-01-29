@@ -1,4 +1,5 @@
 using Relate.Smtp.Core.Entities;
+using Relate.Smtp.Core.Models;
 
 namespace Relate.Smtp.Core.Interfaces;
 
@@ -9,6 +10,8 @@ public interface IEmailRepository
     Task<IReadOnlyList<Email>> GetByUserIdAsync(Guid userId, int skip, int take, CancellationToken cancellationToken = default);
     Task<int> GetCountByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<int> GetUnreadCountByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Email>> SearchByUserIdAsync(Guid userId, EmailSearchFilters filters, int skip, int take, CancellationToken cancellationToken = default);
+    Task<int> GetSearchCountByUserIdAsync(Guid userId, EmailSearchFilters filters, CancellationToken cancellationToken = default);
     Task<Email> AddAsync(Email email, CancellationToken cancellationToken = default);
     Task UpdateAsync(Email email, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);

@@ -5,6 +5,7 @@ using SmtpServer.Protocol;
 using SmtpServer.Storage;
 using Relate.Smtp.Core.Entities;
 using Relate.Smtp.Core.Interfaces;
+using Relate.Smtp.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,6 +87,18 @@ public class CustomMessageStore : MessageStore
                 email.MessageId,
                 email.FromAddress,
                 string.Join(", ", email.Recipients.Select(r => r.Address)));
+
+            // Notify all recipient users via SignalR (if configured)
+            var notificationService = scope.ServiceProvider.GetService<IEmailNotificationService>();
+            if (notificationService != null)
+            {
+                var recipientUserIds = email.Recipients
+                    .Where(r => r.UserId.HasValue)
+                    .Select(r => r.UserId!.Value)
+                    .Distinct();
+
+                await notificationService.NotifyMultipleUsersNewEmailAsync(recipientUserIds, email, cancellationToken);
+            }
 
             return SmtpResponse.Ok;
         }

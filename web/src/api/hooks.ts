@@ -1,12 +1,42 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { EmailListResponse, EmailDetail, Profile, EmailAddress, SmtpCredentials, CreateApiKeyRequest, CreatedApiKey } from './types'
+import type { EmailListResponse, EmailDetail, Profile, EmailAddress, SmtpCredentials, CreateApiKeyRequest, CreatedApiKey, Label, CreateLabelRequest, UpdateLabelRequest, EmailFilter, CreateEmailFilterRequest, UpdateEmailFilterRequest } from './types'
 
 // Email hooks
 export function useEmails(page = 1, pageSize = 20) {
   return useQuery({
     queryKey: ['emails', page, pageSize],
     queryFn: () => api.get<EmailListResponse>(`/emails?page=${page}&pageSize=${pageSize}`),
+  })
+}
+
+export interface EmailSearchFilters {
+  query?: string
+  fromDate?: string
+  toDate?: string
+  hasAttachments?: boolean
+  isRead?: boolean
+}
+
+export function useSearchEmails(
+  filters: EmailSearchFilters,
+  page = 1,
+  pageSize = 20
+) {
+  const params = new URLSearchParams()
+  params.set('page', page.toString())
+  params.set('pageSize', pageSize.toString())
+
+  if (filters.query) params.set('q', filters.query)
+  if (filters.fromDate) params.set('fromDate', filters.fromDate)
+  if (filters.toDate) params.set('toDate', filters.toDate)
+  if (filters.hasAttachments !== undefined) params.set('hasAttachments', filters.hasAttachments.toString())
+  if (filters.isRead !== undefined) params.set('isRead', filters.isRead.toString())
+
+  return useQuery({
+    queryKey: ['emails', 'search', filters, page, pageSize],
+    queryFn: () => api.get<EmailListResponse>(`/emails/search?${params.toString()}`),
+    enabled: !!filters.query || filters.hasAttachments !== undefined || filters.isRead !== undefined,
   })
 }
 
@@ -115,5 +145,133 @@ export function useRevokeSmtpApiKey() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['smtp-credentials'] })
     },
+  })
+}
+
+// Label hooks
+export function useLabels() {
+  return useQuery({
+    queryKey: ['labels'],
+    queryFn: () => api.get<Label[]>('/labels'),
+  })
+}
+
+export function useCreateLabel() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: CreateLabelRequest) =>
+      api.post<Label>('/labels', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labels'] })
+    },
+  })
+}
+
+export function useUpdateLabel() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateLabelRequest }) =>
+      api.put<Label>(`/labels/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labels'] })
+    },
+  })
+}
+
+export function useDeleteLabel() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/labels/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labels'] })
+    },
+  })
+}
+
+export function useAddLabelToEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ emailId, labelId }: { emailId: string; labelId: string }) =>
+      api.post(`/labels/emails/${emailId}`, { labelId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emails'] })
+    },
+  })
+}
+
+export function useRemoveLabelFromEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ emailId, labelId }: { emailId: string; labelId: string }) =>
+      api.delete(`/labels/emails/${emailId}/${labelId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emails'] })
+    },
+  })
+}
+
+export function useEmailsByLabel(labelId: string, page = 1, pageSize = 20) {
+  return useQuery({
+    queryKey: ['emails', 'label', labelId, page, pageSize],
+    queryFn: () => api.get<EmailListResponse>(`/labels/${labelId}/emails?page=${page}&pageSize=${pageSize}`),
+    enabled: !!labelId,
+  })
+}
+
+// Filter hooks
+export function useFilters() {
+  return useQuery({
+    queryKey: ['filters'],
+    queryFn: () => api.get<EmailFilter[]>('/filters'),
+  })
+}
+
+export function useCreateFilter() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: CreateEmailFilterRequest) =>
+      api.post<EmailFilter>('/filters', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['filters'] })
+    },
+  })
+}
+
+export function useUpdateFilter() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateEmailFilterRequest }) =>
+      api.put<EmailFilter>(`/filters/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['filters'] })
+    },
+  })
+}
+
+export function useDeleteFilter() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.delete(`/filters/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['filters'] })
+    },
+  })
+}
+
+export function useTestFilter(id: string, limit = 10) {
+  return useQuery({
+    queryKey: ['filters', 'test', id, limit],
+    queryFn: () => api.post<{ matchCount: number; matchedEmailIds: string[] }>(`/filters/${id}/test?limit=${limit}`, {}),
+    enabled: false, // Only run when manually triggered
   })
 }

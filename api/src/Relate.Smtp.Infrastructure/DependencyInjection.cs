@@ -25,6 +25,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailRepository, EmailRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ISmtpApiKeyRepository, SmtpApiKeyRepository>();
+        services.AddScoped<ILabelRepository, LabelRepository>();
+        services.AddScoped<IEmailLabelRepository, EmailLabelRepository>();
+        services.AddScoped<IEmailFilterRepository, EmailFilterRepository>();
 
         return services;
     }

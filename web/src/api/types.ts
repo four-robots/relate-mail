@@ -97,3 +97,68 @@ export interface SmtpCredentials {
   connectionInfo: SmtpConnectionInfo
   keys: SmtpApiKey[]
 }
+
+export interface Label {
+  id: string
+  name: string
+  color: string
+  sortOrder: number
+  createdAt: string
+}
+
+export interface CreateLabelRequest {
+  name: string
+  color: string
+  sortOrder?: number
+}
+
+export interface UpdateLabelRequest {
+  name?: string
+  color?: string
+  sortOrder?: number
+}
+
+export interface EmailFilter {
+  id: string
+  name: string
+  isEnabled: boolean
+  priority: number
+  fromAddressContains?: string
+  subjectContains?: string
+  bodyContains?: string
+  hasAttachments?: boolean
+  markAsRead: boolean
+  assignLabelId?: string
+  assignLabelName?: string
+  assignLabelColor?: string
+  delete: boolean
+  createdAt: string
+  lastAppliedAt?: string
+  timesApplied: number
+}
+
+export interface CreateEmailFilterRequest {
+  name: string
+  isEnabled?: boolean
+  priority?: number
+  fromAddressContains?: string
+  subjectContains?: string
+  bodyContains?: string
+  hasAttachments?: boolean
+  markAsRead?: boolean
+  assignLabelId?: string
+  delete?: boolean
+}
+
+export interface UpdateEmailFilterRequest {
+  name?: string
+  isEnabled?: boolean
+  priority?: number
+  fromAddressContains?: string
+  subjectContains?: string
+  bodyContains?: string
+  hasAttachments?: boolean
+  markAsRead?: boolean
+  assignLabelId?: string
+  delete?: boolean
+}

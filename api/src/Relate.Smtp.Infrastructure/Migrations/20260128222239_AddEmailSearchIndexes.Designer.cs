@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Relate.Smtp.Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using Relate.Smtp.Infrastructure.Data;
 namespace Relate.Smtp.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260128222239_AddEmailSearchIndexes")]
+    partial class AddEmailSearchIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
@@ -96,100 +99,6 @@ namespace Relate.Smtp.Infrastructure.Migrations
                     b.ToTable("EmailAttachments");
                 });
 
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailFilter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid?>("AssignLabelId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("BodyContains")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("Delete")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("FromAddressContains")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool?>("HasAttachments")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTimeOffset?>("LastAppliedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("MarkAsRead")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("SubjectContains")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("TimesApplied")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(0);
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssignLabelId");
-
-                    b.HasIndex("UserId", "Priority");
-
-                    b.ToTable("EmailFilters");
-                });
-
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailLabel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("AssignedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("EmailId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("LabelId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LabelId");
-
-                    b.HasIndex("EmailId", "LabelId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "LabelId");
-
-                    b.ToTable("EmailLabels");
-                });
-
             modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailRecipient", b =>
                 {
                     b.Property<Guid>("Id")
@@ -228,39 +137,6 @@ namespace Relate.Smtp.Infrastructure.Migrations
                     b.HasIndex("UserId", "IsRead");
 
                     b.ToTable("EmailRecipients");
-                });
-
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.Label", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Name")
-                        .IsUnique();
-
-                    b.ToTable("Labels");
                 });
 
             modelBuilder.Entity("Relate.Smtp.Core.Entities.SmtpApiKey", b =>
@@ -382,51 +258,6 @@ namespace Relate.Smtp.Infrastructure.Migrations
                     b.Navigation("Email");
                 });
 
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailFilter", b =>
-                {
-                    b.HasOne("Relate.Smtp.Core.Entities.Label", "AssignLabel")
-                        .WithMany()
-                        .HasForeignKey("AssignLabelId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Relate.Smtp.Core.Entities.User", "User")
-                        .WithMany("EmailFilters")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignLabel");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailLabel", b =>
-                {
-                    b.HasOne("Relate.Smtp.Core.Entities.Email", "Email")
-                        .WithMany("EmailLabels")
-                        .HasForeignKey("EmailId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Relate.Smtp.Core.Entities.Label", "Label")
-                        .WithMany("EmailLabels")
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Relate.Smtp.Core.Entities.User", "User")
-                        .WithMany("EmailLabels")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Email");
-
-                    b.Navigation("Label");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Relate.Smtp.Core.Entities.EmailRecipient", b =>
                 {
                     b.HasOne("Relate.Smtp.Core.Entities.Email", "Email")
@@ -441,17 +272,6 @@ namespace Relate.Smtp.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Email");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.Label", b =>
-                {
-                    b.HasOne("Relate.Smtp.Core.Entities.User", "User")
-                        .WithMany("Labels")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -482,25 +302,12 @@ namespace Relate.Smtp.Infrastructure.Migrations
                 {
                     b.Navigation("Attachments");
 
-                    b.Navigation("EmailLabels");
-
                     b.Navigation("Recipients");
-                });
-
-            modelBuilder.Entity("Relate.Smtp.Core.Entities.Label", b =>
-                {
-                    b.Navigation("EmailLabels");
                 });
 
             modelBuilder.Entity("Relate.Smtp.Core.Entities.User", b =>
                 {
                     b.Navigation("AdditionalAddresses");
-
-                    b.Navigation("EmailFilters");
-
-                    b.Navigation("EmailLabels");
-
-                    b.Navigation("Labels");
 
                     b.Navigation("ReceivedEmails");
 

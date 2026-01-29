@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Relate.Smtp.Api.Hubs;
 using Relate.Smtp.Api.Services;
 using Relate.Smtp.Infrastructure;
 using Relate.Smtp.Infrastructure.Data;
+using Relate.Smtp.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddInfrastructure(connectionString);
 builder.Services.AddScoped<UserProvisioningService>();
 builder.Services.AddScoped<SmtpCredentialService>();
+builder.Services.AddScoped<EmailFilterService>();
+builder.Services.AddScoped<IEmailNotificationService, SignalREmailNotificationService>();
 
 // Configure OIDC/JWT authentication
 var oidcAuthority = builder.Configuration["Oidc:Authority"];
@@ -69,6 +73,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddSignalR();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -93,5 +98,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<EmailHub>("/hubs/email");
 
 app.Run();

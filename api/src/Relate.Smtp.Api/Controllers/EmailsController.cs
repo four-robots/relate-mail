@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Relate.Smtp.Api.Models;
 using Relate.Smtp.Api.Services;
 using Relate.Smtp.Core.Interfaces;
+using Relate.Smtp.Core.Models;
+using Relate.Smtp.Infrastructure.Services;
 
 namespace Relate.Smtp.Api.Controllers;
 
@@ -13,13 +15,16 @@ public class EmailsController : ControllerBase
 {
     private readonly IEmailRepository _emailRepository;
     private readonly UserProvisioningService _userProvisioningService;
+    private readonly IEmailNotificationService _notificationService;
 
     public EmailsController(
         IEmailRepository emailRepository,
-        UserProvisioningService userProvisioningService)
+        UserProvisioningService userProvisioningService,
+        IEmailNotificationService notificationService)
     {
         _emailRepository = emailRepository;
         _userProvisioningService = userProvisioningService;
+        _notificationService = notificationService;
     }
 
     [HttpGet]
@@ -36,6 +41,41 @@ public class EmailsController : ControllerBase
         var skip = (page - 1) * pageSize;
         var emails = await _emailRepository.GetByUserIdAsync(user.Id, skip, pageSize, cancellationToken);
         var totalCount = await _emailRepository.GetCountByUserIdAsync(user.Id, cancellationToken);
+        var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
+
+        var items = emails.Select(e => e.ToListItemDto(user.Id)).ToList();
+
+        return Ok(new EmailListResponse(items, totalCount, unreadCount, page, pageSize));
+    }
+
+    [HttpGet("search")]
+    public async Task<ActionResult<EmailListResponse>> SearchEmails(
+        [FromQuery] string? q,
+        [FromQuery] DateTimeOffset? fromDate,
+        [FromQuery] DateTimeOffset? toDate,
+        [FromQuery] bool? hasAttachments,
+        [FromQuery] bool? isRead,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        if (page < 1) page = 1;
+        if (pageSize < 1 || pageSize > 100) pageSize = 20;
+
+        var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
+
+        var filters = new EmailSearchFilters
+        {
+            Query = q,
+            FromDate = fromDate,
+            ToDate = toDate,
+            HasAttachments = hasAttachments,
+            IsRead = isRead
+        };
+
+        var skip = (page - 1) * pageSize;
+        var emails = await _emailRepository.SearchByUserIdAsync(user.Id, filters, skip, pageSize, cancellationToken);
+        var totalCount = await _emailRepository.GetSearchCountByUserIdAsync(user.Id, filters, cancellationToken);
         var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
 
         var items = emails.Select(e => e.ToListItemDto(user.Id)).ToList();
@@ -90,6 +130,13 @@ public class EmailsController : ControllerBase
 
         await _emailRepository.UpdateAsync(email, cancellationToken);
 
+        // Notify user of email update
+        await _notificationService.NotifyEmailUpdatedAsync(user.Id, email.Id, recipient.IsRead, cancellationToken);
+
+        // Update unread count
+        var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
+        await _notificationService.NotifyUnreadCountChangedAsync(user.Id, unreadCount, cancellationToken);
+
         return Ok(email.ToDetailDto(user.Id));
     }
 
@@ -110,6 +157,13 @@ public class EmailsController : ControllerBase
         }
 
         await _emailRepository.DeleteAsync(id, cancellationToken);
+
+        // Notify user of email deletion
+        await _notificationService.NotifyEmailDeletedAsync(user.Id, id, cancellationToken);
+
+        // Update unread count
+        var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
+        await _notificationService.NotifyUnreadCountChangedAsync(user.Id, unreadCount, cancellationToken);
 
         return NoContent();
     }
