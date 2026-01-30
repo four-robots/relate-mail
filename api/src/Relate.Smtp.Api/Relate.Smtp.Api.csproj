@@ -48,6 +48,10 @@
 		<None Include="$(SpaRoot)**" Link="clientapp\%(RecursiveDir)%(Filename)%(Extension)" Exclude="$(SpaRoot)node_modules\**;$(SpaRoot)test-results\**;$(SpaRoot)dist\**;$(SpaRoot).tanstack\**;$(SpaRoot)coverage\**;$(SpaRoot).vscode\**" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Properties\PublishProfiles\" />
+	</ItemGroup>
+
 	<!-- Build client app and copy to wwwroot before publish -->
 	<Target Name="BuildAndCopyClientApp" AfterTargets="ComputeFilesToPublish" Condition="'$(Configuration)' == 'Release' Or '$(PublishClientApp)' == 'true'">
 		<Message Importance="high" Text="Building client app in $(ClientAppDir)..." />

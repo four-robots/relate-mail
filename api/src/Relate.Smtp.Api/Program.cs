@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Relate.Smtp.Api.Authentication;
@@ -10,16 +9,6 @@ using Relate.Smtp.Infrastructure.Data;
 using Relate.Smtp.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Configure forwarded headers for Azure App Service
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
-                              ForwardedHeaders.XForwardedProto |
-                              ForwardedHeaders.XForwardedHost;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
-});
 
 // Add services to the container
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -106,8 +95,6 @@ if (app.Environment.IsDevelopment())
 }
 
 // Configure the HTTP request pipeline
-app.UseForwardedHeaders();
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
