@@ -76,9 +76,15 @@ export interface SmtpConnectionInfo {
   smtpServer: string
   smtpPort: number
   smtpSecurePort: number
+  smtpEnabled: boolean
   pop3Server: string
   pop3Port: number
   pop3SecurePort: number
+  pop3Enabled: boolean
+  imapServer: string
+  imapPort: number
+  imapSecurePort: number
+  imapEnabled: boolean
   username: string
   activeKeyCount: number
 }

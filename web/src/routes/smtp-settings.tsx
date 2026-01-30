@@ -29,13 +29,14 @@ function SmtpSettingsPage() {
     }
   }, [auth.isAuthenticated, auth.isLoading])
   const [keyName, setKeyName] = useState('')
-  const [selectedScopes, setSelectedScopes] = useState<string[]>(['smtp', 'pop3', 'api:read', 'api:write'])
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(['smtp', 'pop3', 'imap', 'api:read', 'api:write'])
   const [createdKey, setCreatedKey] = useState<{ apiKey: string; name: string; scopes: string[] } | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
 
   const scopeOptions = [
     { value: 'smtp', label: 'SMTP', description: 'Send emails via SMTP server' },
     { value: 'pop3', label: 'POP3', description: 'Retrieve emails via POP3 server' },
+    { value: 'imap', label: 'IMAP', description: 'Retrieve emails via IMAP server' },
     { value: 'api:read', label: 'API Read', description: 'Read emails via REST API' },
     { value: 'api:write', label: 'API Write', description: 'Modify/delete emails via REST API' }
   ]
@@ -46,7 +47,7 @@ function SmtpSettingsPage() {
         onSuccess: (data) => {
           setCreatedKey({ apiKey: data.apiKey, name: data.name, scopes: data.scopes })
           setKeyName('')
-          setSelectedScopes(['smtp', 'pop3', 'api:read', 'api:write'])
+          setSelectedScopes(['smtp', 'pop3', 'imap', 'api:read', 'api:write'])
           setIsCreatingKey(false)
         },
       })
@@ -101,37 +102,65 @@ function SmtpSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2">Outgoing Mail (SMTP)</h4>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Server</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpServer}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpPort}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.smtpSecurePort}</p>
-                </div>
-              </div>
+              {connectionInfo.smtpEnabled && (
+                <>
+                  <h4 className="font-medium mb-2">Outgoing Mail (SMTP)</h4>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpServer}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpPort}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpSecurePort}</p>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <h4 className="font-medium mb-2">Incoming Mail (POP3)</h4>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Server</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Server}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Port</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Port}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.pop3SecurePort}</p>
-                </div>
-              </div>
+              {connectionInfo.pop3Enabled && (
+                <>
+                  <h4 className="font-medium mb-2">Incoming Mail (POP3)</h4>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Server}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Port</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Port}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3SecurePort}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {connectionInfo.imapEnabled && (
+                <>
+                  <h4 className="font-medium mb-2">Incoming Mail (IMAP)</h4>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapServer}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Port</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapPort}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapSecurePort}</p>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -223,7 +252,7 @@ function SmtpSettingsPage() {
                     <Button variant="outline" onClick={() => {
                       setIsCreatingKey(false)
                       setKeyName('')
-                      setSelectedScopes(['smtp', 'pop3', 'api:read', 'api:write'])
+                      setSelectedScopes(['smtp', 'pop3', 'imap', 'api:read', 'api:write'])
                     }}>
                       Cancel
                     </Button>
@@ -336,16 +365,33 @@ function SmtpSettingsPage() {
             <div className="bg-muted rounded p-3 space-y-2">
               <p className="text-sm font-medium">Email Client Configuration:</p>
               <div className="text-sm space-y-1">
-                <p className="font-medium">Outgoing (SMTP):</p>
-                <ul className="list-disc list-inside ml-2">
-                  <li>Server: {connectionInfo.smtpServer}</li>
-                  <li>Port: {connectionInfo.smtpPort} (STARTTLS)</li>
-                </ul>
-                <p className="font-medium mt-2">Incoming (POP3):</p>
-                <ul className="list-disc list-inside ml-2">
-                  <li>Server: {connectionInfo.pop3Server}</li>
-                  <li>Port: {connectionInfo.pop3Port}</li>
-                </ul>
+                {connectionInfo.smtpEnabled && (
+                  <>
+                    <p className="font-medium">Outgoing (SMTP):</p>
+                    <ul className="list-disc list-inside ml-2">
+                      <li>Server: {connectionInfo.smtpServer}</li>
+                      <li>Port: {connectionInfo.smtpPort} (STARTTLS)</li>
+                    </ul>
+                  </>
+                )}
+                {connectionInfo.pop3Enabled && (
+                  <>
+                    <p className="font-medium mt-2">Incoming (POP3):</p>
+                    <ul className="list-disc list-inside ml-2">
+                      <li>Server: {connectionInfo.pop3Server}</li>
+                      <li>Port: {connectionInfo.pop3Port}</li>
+                    </ul>
+                  </>
+                )}
+                {connectionInfo.imapEnabled && (
+                  <>
+                    <p className="font-medium mt-2">Incoming (IMAP):</p>
+                    <ul className="list-disc list-inside ml-2">
+                      <li>Server: {connectionInfo.imapServer}</li>
+                      <li>Port: {connectionInfo.imapPort}</li>
+                    </ul>
+                  </>
+                )}
                 <p className="font-medium mt-2">Authentication:</p>
                 <ul className="list-disc list-inside ml-2">
                   <li>Username: {connectionInfo.username}</li>

@@ -14,9 +14,11 @@ COPY api/src/Relate.Smtp.Infrastructure/Relate.Smtp.Infrastructure.csproj api/sr
 COPY api/src/Relate.Smtp.Api/Relate.Smtp.Api.csproj api/src/Relate.Smtp.Api/
 COPY api/src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj api/src/Relate.Smtp.SmtpHost/
 COPY api/src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj api/src/Relate.Smtp.Pop3Host/
+COPY api/src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj api/src/Relate.Smtp.ImapHost/
 RUN dotnet restore api/src/Relate.Smtp.Api/Relate.Smtp.Api.csproj
 RUN dotnet restore api/src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj
 RUN dotnet restore api/src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj
+RUN dotnet restore api/src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj
 
 # Copy backend and web sources
 COPY api api/
@@ -31,6 +33,7 @@ WORKDIR /src/api
 RUN dotnet publish src/Relate.Smtp.Api/Relate.Smtp.Api.csproj -c Release -o /app/api
 RUN dotnet publish src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj -c Release -o /app/smtp
 RUN dotnet publish src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj -c Release -o /app/pop3
+RUN dotnet publish src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj -c Release -o /app/imap
 
 # API runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS api
@@ -74,3 +77,17 @@ LABEL org.opencontainers.image.source="https://github.com/tyevco/relate-smtp"
 
 EXPOSE 110 995
 ENTRYPOINT ["dotnet", "Relate.Smtp.Pop3Host.dll"]
+
+# IMAP runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS imap
+WORKDIR /app
+COPY --from=build /app/imap .
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate IMAP Server"
+LABEL org.opencontainers.image.description="IMAP server for retrieving emails"
+LABEL org.opencontainers.image.vendor="Relate SMTP"
+LABEL org.opencontainers.image.source="https://github.com/tyevco/relate-smtp"
+
+EXPOSE 143 993
+ENTRYPOINT ["dotnet", "Relate.Smtp.ImapHost.dll"]

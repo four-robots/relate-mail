@@ -4,10 +4,11 @@ public static class ApiKeyScopes
 {
     public const string Smtp = "smtp";
     public const string Pop3 = "pop3";
+    public const string Imap = "imap";
     public const string ApiRead = "api:read";
     public const string ApiWrite = "api:write";
 
-    public static readonly string[] AllScopes = { Smtp, Pop3, ApiRead, ApiWrite };
+    public static readonly string[] AllScopes = { Smtp, Pop3, Imap, ApiRead, ApiWrite };
 
     public static bool IsValidScope(string scope)
     {
@@ -47,9 +48,15 @@ public record SmtpConnectionInfoDto(
     string SmtpServer,
     int SmtpPort,
     int SmtpSecurePort,
+    bool SmtpEnabled,
     string Pop3Server,
     int Pop3Port,
     int Pop3SecurePort,
+    bool Pop3Enabled,
+    string ImapServer,
+    int ImapPort,
+    int ImapSecurePort,
+    bool ImapEnabled,
     string Username,
     int ActiveKeyCount
 );

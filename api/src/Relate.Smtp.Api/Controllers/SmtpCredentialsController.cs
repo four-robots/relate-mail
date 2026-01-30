@@ -40,9 +40,15 @@ public class SmtpCredentialsController : ControllerBase
             SmtpServer: _configuration["Smtp:ServerName"] ?? "localhost",
             SmtpPort: int.Parse(_configuration["Smtp:Port"] ?? "587"),
             SmtpSecurePort: int.Parse(_configuration["Smtp:SecurePort"] ?? "465"),
+            SmtpEnabled: bool.Parse(_configuration["Smtp:Enabled"] ?? "true"),
             Pop3Server: _configuration["Pop3:ServerName"] ?? "localhost",
             Pop3Port: int.Parse(_configuration["Pop3:Port"] ?? "110"),
             Pop3SecurePort: int.Parse(_configuration["Pop3:SecurePort"] ?? "995"),
+            Pop3Enabled: bool.Parse(_configuration["Pop3:Enabled"] ?? "true"),
+            ImapServer: _configuration["Imap:ServerName"] ?? "localhost",
+            ImapPort: int.Parse(_configuration["Imap:Port"] ?? "143"),
+            ImapSecurePort: int.Parse(_configuration["Imap:SecurePort"] ?? "993"),
+            ImapEnabled: bool.Parse(_configuration["Imap:Enabled"] ?? "true"),
             Username: user.Email,
             ActiveKeyCount: keys.Count
         );

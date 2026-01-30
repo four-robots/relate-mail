@@ -7,7 +7,7 @@ var builder = Host.CreateApplicationBuilder(args);
 
 // Add infrastructure services
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=relate-smtp.db";
+    ?? "Host=localhost;Port=5432;Database=relate_smtp;Username=postgres;Password=postgres";
 
 builder.Services.AddInfrastructure(connectionString);
 

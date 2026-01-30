@@ -3,6 +3,7 @@
     <Project Path="src/Relate.Smtp.Api/Relate.Smtp.Api.csproj" />
     <Project Path="src/Relate.Smtp.Core/Relate.Smtp.Core.csproj" />
     <Project Path="src/Relate.Smtp.Infrastructure/Relate.Smtp.Infrastructure.csproj" />
+    <Project Path="src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj" />
     <Project Path="src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj" />
     <Project Path="src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj" />
   </Folder>
