@@ -1,21 +1,40 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=relate_smtp
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - relate-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ..
       dockerfile: api/Dockerfile
       target: api
     environment:
-      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=relate_smtp;Username=postgres;Password=postgres
       - Oidc__Authority=${OIDC_AUTHORITY:-}
       - Oidc__Audience=${OIDC_AUDIENCE:-}
-      - Cors__AllowedOrigins__0=http://localhost:3000
-    volumes:
-      - db-data:/data
+    ports:
+      - "8080:8080"
     networks:
       - relate-network
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   smtp:
     build:
@@ -23,18 +42,19 @@ services:
       dockerfile: api/Dockerfile
       target: smtp
     environment:
-      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=relate_smtp;Username=postgres;Password=postgres
       - Smtp__ServerName=${SMTP_SERVER_NAME:-localhost}
       - Smtp__Port=587
       - Smtp__RequireAuthentication=true
     ports:
       - "587:587"
       - "465:465"
-    volumes:
-      - db-data:/data
     networks:
       - relate-network
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   pop3:
     build:
@@ -42,7 +62,7 @@ services:
       dockerfile: api/Dockerfile
       target: pop3
     environment:
-      - ConnectionStrings__DefaultConnection=Data Source=/data/relate-smtp.db
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=relate_smtp;Username=postgres;Password=postgres
       - Pop3__ServerName=${POP3_SERVER_NAME:-localhost}
       - Pop3__Port=110
       - Pop3__SecurePort=995
@@ -50,34 +70,36 @@ services:
     ports:
       - "110:110"
       - "995:995"
-    volumes:
-      - db-data:/data
     networks:
       - relate-network
     restart: unless-stopped
     depends_on:
-      - api
+      postgres:
+        condition: service_healthy
 
-  web:
+  imap:
     build:
-      context: ../web
-      dockerfile: Dockerfile
-      target: production
+      context: ..
+      dockerfile: api/Dockerfile
+      target: imap
     environment:
-      - OIDC_AUTHORITY=${OIDC_AUTHORITY:-}
-      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-}
-      - OIDC_REDIRECT_URI=${OIDC_REDIRECT_URI:-}
-      - OIDC_SCOPE=${OIDC_SCOPE:-openid profile email}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=relate_smtp;Username=postgres;Password=postgres
+      - Imap__ServerName=${IMAP_SERVER_NAME:-localhost}
+      - Imap__Port=143
+      - Imap__SecurePort=993
+      - Imap__RequireAuthentication=true
     ports:
-      - "3000:80"
-    depends_on:
-      - api
+      - "143:143"
+      - "993:993"
     networks:
       - relate-network
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
-  db-data:
+  postgres-data:
 
 networks:
   relate-network:
