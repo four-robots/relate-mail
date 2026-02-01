@@ -60,6 +60,10 @@ public class ImapCommandHandler
                     break;
             }
         }
+        catch (IOException ex) when (ex.Message.Contains("Broken pipe") || ex.InnerException?.Message.Contains("Broken pipe") == true)
+        {
+            _logger.LogDebug("Client disconnected unexpectedly (broken pipe): {ConnectionId}", session.ConnectionId);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Session error: {ConnectionId}", session.ConnectionId);
