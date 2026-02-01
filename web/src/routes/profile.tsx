@@ -68,36 +68,39 @@ function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Profile</h1>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-2xl">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Profile</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Basic Info */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>Your account details</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Basic Information</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Your account details</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Display Name</label>
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground">Display Name</label>
               {isEditingName ? (
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-col sm:flex-row gap-2 mt-1">
                   <Input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Enter display name"
+                    className="text-sm"
                   />
-                  <Button size="icon" onClick={handleSaveName}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button size="icon" variant="outline" onClick={() => setIsEditingName(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button size="icon" onClick={handleSaveName} className="min-h-[44px]">
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button size="icon" variant="outline" onClick={() => setIsEditingName(false)} className="min-h-[44px]">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between mt-1">
-                  <span>{profile.displayName || '(Not set)'}</span>
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <span className="text-sm break-words">{profile.displayName || '(Not set)'}</span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -105,6 +108,7 @@ function ProfilePage() {
                       setDisplayName(profile.displayName || '')
                       setIsEditingName(true)
                     }}
+                    className="min-h-[44px] whitespace-nowrap"
                   >
                     Edit
                   </Button>
@@ -113,13 +117,13 @@ function ProfilePage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Primary Email</label>
-              <p className="mt-1">{profile.email}</p>
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground">Primary Email</label>
+              <p className="mt-1 text-sm break-all">{profile.email}</p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Member Since</label>
-              <p className="mt-1">
+              <label className="text-xs sm:text-sm font-medium text-muted-foreground">Member Since</label>
+              <p className="mt-1 text-sm">
                 {new Date(profile.createdAt).toLocaleDateString()}
               </p>
             </div>
@@ -129,15 +133,15 @@ function ProfilePage() {
         {/* Additional Email Addresses */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Email Addresses</CardTitle>
-                <CardDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-base sm:text-lg">Email Addresses</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Add additional email addresses to receive emails from
                 </CardDescription>
               </div>
               {!isAddingAddress && (
-                <Button onClick={() => setIsAddingAddress(true)}>
+                <Button onClick={() => setIsAddingAddress(true)} className="w-full sm:w-auto min-h-[44px]">
                   <Plus className="h-4 w-4 mr-1" />
                   Add
                 </Button>
@@ -147,28 +151,29 @@ function ProfilePage() {
           <CardContent>
             <div className="space-y-2">
               {/* Primary email */}
-              <div className="flex items-center justify-between p-2 rounded bg-muted">
-                <div className="flex items-center gap-2">
-                  <span>{profile.email}</span>
-                  <Badge variant="secondary">Primary</Badge>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 rounded bg-muted gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm break-all">{profile.email}</span>
+                  <Badge variant="secondary" className="text-xs">Primary</Badge>
                 </div>
               </div>
 
               {/* Additional addresses */}
               {profile.additionalAddresses.map((addr) => (
-                <div key={addr.id} className="flex items-center justify-between p-2 rounded border">
-                  <div className="flex items-center gap-2">
-                    <span>{addr.address}</span>
+                <div key={addr.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-2 rounded border gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm break-all">{addr.address}</span>
                     {addr.isVerified ? (
-                      <Badge variant="secondary">Verified</Badge>
+                      <Badge variant="secondary" className="text-xs">Verified</Badge>
                     ) : (
-                      <Badge variant="outline">Unverified</Badge>
+                      <Badge variant="outline" className="text-xs">Unverified</Badge>
                     )}
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => removeAddress.mutate(addr.id)}
+                    className="min-h-[44px]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -177,24 +182,27 @@ function ProfilePage() {
 
               {/* Add new address form */}
               {isAddingAddress && (
-                <div className="flex gap-2 p-2">
+                <div className="flex flex-col sm:flex-row gap-2 p-2">
                   <Input
                     type="email"
                     value={newAddress}
                     onChange={(e) => setNewAddress(e.target.value)}
                     placeholder="email@example.com"
+                    className="text-sm"
                   />
-                  <Button onClick={handleAddAddress} disabled={addAddress.isPending}>
-                    Add
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsAddingAddress(false)}>
-                    Cancel
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleAddAddress} disabled={addAddress.isPending} className="flex-1 sm:flex-none min-h-[44px]">
+                      Add
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsAddingAddress(false)} className="flex-1 sm:flex-none min-h-[44px]">
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {profile.additionalAddresses.length === 0 && !isAddingAddress && (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center py-4">
                   No additional email addresses
                 </p>
               )}

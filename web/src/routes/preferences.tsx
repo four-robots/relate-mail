@@ -80,27 +80,27 @@ function PreferencesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Preferences</h1>
-        <Button onClick={handleSave} disabled={updatePreferences.isPending}>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-3xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold">Preferences</h1>
+        <Button onClick={handleSave} disabled={updatePreferences.isPending} className="w-full sm:w-auto min-h-[44px]">
           <Save className="h-4 w-4 mr-2" />
           Save Changes
         </Button>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Appearance */}
         <Card>
           <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>Customize how the interface looks and feels</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Appearance</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Customize how the interface looks and feels</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+              <Label htmlFor="theme" className="text-xs sm:text-sm">Theme</Label>
               <Select value={theme} onValueChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -112,9 +112,9 @@ function PreferencesPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="density">Display Density</Label>
+              <Label htmlFor="density" className="text-xs sm:text-sm">Display Density</Label>
               <Select value={displayDensity} onValueChange={(value) => setDisplayDensity(value as 'compact' | 'comfortable' | 'spacious')}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,12 +130,12 @@ function PreferencesPage() {
         {/* Email List */}
         <Card>
           <CardHeader>
-            <CardTitle>Email List</CardTitle>
-            <CardDescription>Configure how emails are displayed in the inbox</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Email List</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Configure how emails are displayed in the inbox</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="perPage">Emails per Page</Label>
+              <Label htmlFor="perPage" className="text-xs sm:text-sm">Emails per Page</Label>
               <Input
                 id="perPage"
                 type="number"
@@ -144,13 +144,14 @@ function PreferencesPage() {
                 step="10"
                 value={emailsPerPage}
                 onChange={(e) => setEmailsPerPage(e.target.value)}
+                className="text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="defaultSort">Default Sort Order</Label>
+              <Label htmlFor="defaultSort" className="text-xs sm:text-sm">Default Sort Order</Label>
               <Select value={defaultSort} onValueChange={setDefaultSort}>
-                <SelectTrigger>
+                <SelectTrigger className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,10 +165,10 @@ function PreferencesPage() {
               </Select>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Show Email Preview</Label>
-                <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-0.5 flex-1">
+                <Label className="text-xs sm:text-sm">Show Email Preview</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Display a preview of email content in the list
                 </p>
               </div>
@@ -177,10 +178,10 @@ function PreferencesPage() {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Group by Date</Label>
-                <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-0.5 flex-1">
+                <Label className="text-xs sm:text-sm">Group by Date</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Group emails by date (Today, Yesterday, etc.)
                 </p>
               </div>
@@ -195,14 +196,14 @@ function PreferencesPage() {
         {/* Notifications */}
         <Card>
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Control how and when you receive notifications</CardDescription>
+            <CardTitle className="text-base sm:text-lg">Notifications</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Control how and when you receive notifications</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Desktop Notifications</Label>
-                <p className="text-sm text-muted-foreground">
+          <CardContent className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-0.5 flex-1">
+                <Label className="text-xs sm:text-sm">Desktop Notifications</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Show desktop notifications for new emails
                 </p>
               </div>
@@ -214,10 +215,10 @@ function PreferencesPage() {
 
             {pushNotifications.isSupported && (
               <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Browser Push Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                  <div className="space-y-0.5 flex-1">
+                    <Label className="text-xs sm:text-sm">Browser Push Notifications</Label>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       Receive notifications even when the app is closed
                     </p>
                   </div>
@@ -227,6 +228,7 @@ function PreferencesPage() {
                       disabled={pushNotifications.isLoading}
                       variant="outline"
                       size="sm"
+                      className="min-h-[44px] w-full sm:w-auto"
                     >
                       <BellOff className="h-4 w-4 mr-2" />
                       Disable
@@ -236,6 +238,7 @@ function PreferencesPage() {
                       onClick={pushNotifications.subscribe}
                       disabled={pushNotifications.isLoading}
                       size="sm"
+                      className="min-h-[44px] w-full sm:w-auto"
                     >
                       <Bell className="h-4 w-4 mr-2" />
                       Enable
@@ -243,17 +246,17 @@ function PreferencesPage() {
                   )}
                 </div>
                 {pushNotifications.error && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">
                     {pushNotifications.error}
                   </p>
                 )}
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Email Digest</Label>
-                <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+              <div className="space-y-0.5 flex-1">
+                <Label className="text-xs sm:text-sm">Email Digest</Label>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Receive periodic email summaries
                 </p>
               </div>
@@ -266,9 +269,9 @@ function PreferencesPage() {
             {emailDigest && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="digestFrequency">Digest Frequency</Label>
+                  <Label htmlFor="digestFrequency" className="text-xs sm:text-sm">Digest Frequency</Label>
                   <Select value={digestFrequency} onValueChange={(value) => setDigestFrequency(value as 'daily' | 'weekly')}>
-                    <SelectTrigger>
+                    <SelectTrigger className="text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -279,12 +282,13 @@ function PreferencesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="digestTime">Digest Time</Label>
+                  <Label htmlFor="digestTime" className="text-xs sm:text-sm">Digest Time</Label>
                   <Input
                     id="digestTime"
                     type="time"
                     value={digestTime}
                     onChange={(e) => setDigestTime(e.target.value)}
+                    className="text-sm"
                   />
                 </div>
               </>
@@ -294,7 +298,7 @@ function PreferencesPage() {
       </div>
 
       {updatePreferences.isSuccess && (
-        <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200">
+        <div className="mt-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200 text-xs sm:text-sm">
           Preferences saved successfully!
         </div>
       )}

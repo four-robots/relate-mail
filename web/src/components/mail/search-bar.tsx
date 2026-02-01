@@ -22,7 +22,7 @@ export function SearchBar({ onSearch, initialValue = '' }: SearchBarProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+    <form onSubmit={handleSubmit} className="flex gap-2">
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -30,7 +30,7 @@ export function SearchBar({ onSearch, initialValue = '' }: SearchBarProps) {
           placeholder="Search emails..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-9 pr-9"
+          className="pl-9 pr-9 text-sm"
         />
         {query && (
           <Button
@@ -44,7 +44,10 @@ export function SearchBar({ onSearch, initialValue = '' }: SearchBarProps) {
           </Button>
         )}
       </div>
-      <Button type="submit">Search</Button>
+      <Button type="submit" className="min-h-[44px] text-xs sm:text-sm">
+        <span className="hidden sm:inline">Search</span>
+        <Search className="h-4 w-4 sm:hidden" />
+      </Button>
     </form>
   )
 }

@@ -88,15 +88,15 @@ function SmtpSettingsPage() {
   const { connectionInfo, keys } = credentials
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
-      <h1 className="text-2xl font-bold mb-6">SMTP Settings</h1>
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-4xl">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">SMTP Settings</h1>
 
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Connection Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Connection Information</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-base sm:text-lg">Connection Information</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Use these settings to configure your email client
             </CardDescription>
           </CardHeader>
@@ -104,19 +104,19 @@ function SmtpSettingsPage() {
             <div>
               {connectionInfo.smtpEnabled && (
                 <>
-                  <h4 className="font-medium mb-2">Outgoing Mail (SMTP)</h4>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Outgoing Mail (SMTP)</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Server</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpServer}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm break-all">{connectionInfo.smtpServer}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpPort}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Port (STARTTLS)</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.smtpPort}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.smtpSecurePort}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.smtpSecurePort}</p>
                     </div>
                   </div>
                 </>
@@ -124,19 +124,19 @@ function SmtpSettingsPage() {
 
               {connectionInfo.pop3Enabled && (
                 <>
-                  <h4 className="font-medium mb-2">Incoming Mail (POP3)</h4>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Incoming Mail (POP3)</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Server</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Server}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm break-all">{connectionInfo.pop3Server}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Port</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3Port}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Port</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.pop3Port}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.pop3SecurePort}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.pop3SecurePort}</p>
                     </div>
                   </div>
                 </>
@@ -144,39 +144,39 @@ function SmtpSettingsPage() {
 
               {connectionInfo.imapEnabled && (
                 <>
-                  <h4 className="font-medium mb-2">Incoming Mail (IMAP)</h4>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Incoming Mail (IMAP)</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Server</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapServer}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Server</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm break-all">{connectionInfo.imapServer}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Port</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapPort}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Port</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.imapPort}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
-                      <p className="mt-1 font-mono text-sm">{connectionInfo.imapSecurePort}</p>
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground">Secure Port (SSL/TLS)</label>
+                      <p className="mt-1 font-mono text-xs sm:text-sm">{connectionInfo.imapSecurePort}</p>
                     </div>
                   </div>
                 </>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Username</label>
-                  <p className="mt-1 font-mono text-sm">{connectionInfo.username}</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Username</label>
+                  <p className="mt-1 font-mono text-xs sm:text-sm break-all">{connectionInfo.username}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Password</label>
-                  <p className="mt-1 text-sm text-muted-foreground">Use generated API key</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">Password</label>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground">Use generated API key</p>
                 </div>
               </div>
             </div>
 
             <div className="border-t pt-4 mt-4">
-              <h4 className="text-sm font-medium mb-2">Setup Instructions</h4>
-              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              <h4 className="text-xs sm:text-sm font-medium mb-2">Setup Instructions</h4>
+              <ol className="text-xs sm:text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Generate an API key below</li>
                 <li>Configure your email client with the server and port above</li>
                 <li>Use your email address as the username</li>
@@ -189,15 +189,15 @@ function SmtpSettingsPage() {
         {/* API Keys */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>API Keys</CardTitle>
-                <CardDescription>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-base sm:text-lg">API Keys</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
                   Manage API keys for SMTP authentication ({keys.length} active)
                 </CardDescription>
               </div>
               {!isCreatingKey && (
-                <Button onClick={() => setIsCreatingKey(true)}>
+                <Button onClick={() => setIsCreatingKey(true)} className="w-full sm:w-auto min-h-[44px]">
                   <Plus className="h-4 w-4 mr-1" />
                   Generate Key
                 </Button>
@@ -208,22 +208,23 @@ function SmtpSettingsPage() {
             <div className="space-y-2">
               {/* Create key form */}
               {isCreatingKey && (
-                <div className="p-4 rounded border bg-muted/50 space-y-4">
+                <div className="p-3 sm:p-4 rounded border bg-muted/50 space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Key Name</label>
+                    <label className="text-xs sm:text-sm font-medium mb-2 block">Key Name</label>
                     <Input
                       value={keyName}
                       onChange={(e) => setKeyName(e.target.value)}
                       placeholder="Key name (e.g., Work Laptop, iPhone)"
                       onKeyDown={(e) => e.key === 'Enter' && selectedScopes.length > 0 && handleCreateKey()}
+                      className="text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Permissions</label>
+                    <label className="text-xs sm:text-sm font-medium mb-2 block">Permissions</label>
                     <div className="space-y-2">
                       {scopeOptions.map(scope => (
-                        <label key={scope.value} className="flex items-start gap-2 cursor-pointer">
+                        <label key={scope.value} className="flex items-start gap-2 cursor-pointer min-h-[44px] py-2">
                           <input
                             type="checkbox"
                             checked={selectedScopes.includes(scope.value)}
@@ -234,10 +235,10 @@ function SmtpSettingsPage() {
                                 setSelectedScopes(selectedScopes.filter(s => s !== scope.value))
                               }
                             }}
-                            className="mt-1"
+                            className="mt-1 w-4 h-4"
                           />
                           <div className="flex-1">
-                            <div className="font-medium text-sm">{scope.label}</div>
+                            <div className="font-medium text-xs sm:text-sm">{scope.label}</div>
                             <div className="text-xs text-muted-foreground">{scope.description}</div>
                           </div>
                         </label>
@@ -245,15 +246,15 @@ function SmtpSettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button onClick={handleCreateKey} disabled={createKey.isPending || !keyName.trim() || selectedScopes.length === 0}>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={handleCreateKey} disabled={createKey.isPending || !keyName.trim() || selectedScopes.length === 0} className="min-h-[44px]">
                       Create
                     </Button>
                     <Button variant="outline" onClick={() => {
                       setIsCreatingKey(false)
                       setKeyName('')
                       setSelectedScopes(['smtp', 'pop3', 'imap', 'api:read', 'api:write'])
-                    }}>
+                    }} className="min-h-[44px]">
                       Cancel
                     </Button>
                   </div>
@@ -263,18 +264,18 @@ function SmtpSettingsPage() {
               {/* Key list */}
               {keys.length > 0 ? (
                 keys.map((key) => (
-                  <div key={key.id} className="flex items-center justify-between p-4 rounded border">
-                    <div className="flex items-center gap-3">
-                      <KeyRound className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{key.name}</p>
-                        <p className="text-sm text-muted-foreground">
+                  <div key={key.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 rounded border gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <KeyRound className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm sm:text-base break-words">{key.name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Created {formatDistanceToNow(new Date(key.createdAt), { addSuffix: true })}
                           {key.lastUsedAt && (
                             <> • Last used {formatDistanceToNow(new Date(key.lastUsedAt), { addSuffix: true })}</>
                           )}
                         </p>
-                        <div className="flex gap-1 mt-1">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {key.scopes.map(scope => (
                             <span key={scope} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
                               {scope}
@@ -291,13 +292,14 @@ function SmtpSettingsPage() {
                           revokeKey.mutate(key.id)
                         }
                       }}
+                      className="min-h-[44px] self-end sm:self-auto"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center py-8">
                   No API keys yet. Generate one to get started.
                 </p>
               )}

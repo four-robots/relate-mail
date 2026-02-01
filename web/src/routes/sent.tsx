@@ -17,17 +17,18 @@ function SentMailPage() {
   const { data: emails, isLoading } = useSentEmails(selectedFromAddress, page, 20)
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Mail className="h-6 w-6" />
-          Sent Mail
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <Mail className="h-5 w-5 sm:h-6 sm:w-6" />
+          <span className="hidden sm:inline">Sent Mail</span>
+          <span className="sm:hidden">Sent</span>
         </h1>
       </div>
 
       {/* From Address Filter */}
       {addresses && addresses.length > 0 && (
-        <div className="mb-4 flex items-center gap-2">
+        <div className="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Filter className="h-4 w-4 text-gray-500" />
           <select
             value={selectedFromAddress || 'all'}
@@ -35,7 +36,7 @@ function SentMailPage() {
               setSelectedFromAddress(e.target.value === 'all' ? undefined : e.target.value)
               setPage(1)
             }}
-            className="border rounded-md px-3 py-2"
+            className="w-full sm:w-auto border rounded-md px-3 py-2 text-sm"
           >
             <option value="all">All sender addresses ({emails?.totalCount || 0})</option>
             {addresses.map((address) => (
@@ -49,31 +50,33 @@ function SentMailPage() {
 
       {/* Email List */}
       {isLoading ? (
-        <div className="text-center py-8">Loading...</div>
+        <div className="text-center py-8 text-sm">Loading...</div>
       ) : emails && emails.items.length > 0 ? (
         <>
-          <EmailList
-            emails={emails.items}
-            onSelect={(id) => navigate({ to: `/emails/${id}` })}
-          />
+          <div className="border rounded-lg bg-card">
+            <EmailList
+              emails={emails.items}
+              onSelect={(id) => navigate({ to: `/emails/${id}` })}
+            />
+          </div>
 
           {/* Pagination */}
           {emails.totalCount > 20 && (
-            <div className="mt-4 flex justify-center gap-2">
+            <div className="mt-4 flex flex-wrap justify-center items-center gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 border rounded disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 border rounded disabled:opacity-50 text-xs sm:text-sm min-h-[44px]"
               >
                 Previous
               </button>
-              <span className="px-4 py-2">
+              <span className="px-2 sm:px-4 py-2 text-xs sm:text-sm">
                 Page {page} of {Math.ceil(emails.totalCount / 20)}
               </span>
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={page >= Math.ceil(emails.totalCount / 20)}
-                className="px-4 py-2 border rounded disabled:opacity-50"
+                className="px-3 sm:px-4 py-2 border rounded disabled:opacity-50 text-xs sm:text-sm min-h-[44px]"
               >
                 Next
               </button>
@@ -81,7 +84,7 @@ function SentMailPage() {
           )}
         </>
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 text-sm">
           {selectedFromAddress
             ? `No emails sent from ${selectedFromAddress}`
             : 'No sent emails'}
