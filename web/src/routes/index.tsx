@@ -126,17 +126,17 @@ function InboxPage() {
   const totalPages = currentData ? Math.ceil(currentData.totalCount / currentData.pageSize) : 1
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex gap-6">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Email List */}
-        <div className={`w-full md:w-96 ${selectedEmailId ? 'hidden md:block' : ''}`}>
-          <div className="flex items-center justify-between mb-4">
+        <div className={`w-full lg:w-96 ${selectedEmailId ? 'hidden lg:block' : ''}`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">
+              <h2 className="text-base sm:text-lg font-semibold">
                 {isSearching ? 'Search Results' : 'Inbox'}
               </h2>
               {(unreadCount !== null && unreadCount > 0) && (
-                <Badge variant="secondary">{unreadCount} unread</Badge>
+                <Badge variant="secondary" className="text-xs">{unreadCount} unread</Badge>
               )}
             </div>
             <div className="flex items-center gap-1">
@@ -147,11 +147,13 @@ function InboxPage() {
             </div>
           </div>
 
-          <SearchBar onSearch={handleSearch} initialValue={searchFilters.query} />
+          <div className="mb-4">
+            <SearchBar onSearch={handleSearch} initialValue={searchFilters.query} />
+          </div>
 
           <div className="border rounded-lg bg-card">
             {currentLoading ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-muted-foreground text-sm">
                 Loading...
               </div>
             ) : (
@@ -164,17 +166,18 @@ function InboxPage() {
           </div>
 
           {emailsData && totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="text-xs sm:text-sm"
               >
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Previous
+                <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                 Page {page} of {totalPages}
               </span>
               <Button
@@ -182,18 +185,19 @@ function InboxPage() {
                 size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
+                className="text-xs sm:text-sm"
               >
-                Next
-                <ChevronRight className="h-4 w-4 ml-1" />
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4 sm:ml-1" />
               </Button>
             </div>
           )}
         </div>
 
         {/* Email Detail */}
-        <div className={`flex-1 ${selectedEmailId ? '' : 'hidden md:block'}`}>
+        <div className={`flex-1 ${selectedEmailId ? '' : 'hidden lg:block'}`}>
           {selectedEmail ? (
-            <div className="border rounded-lg bg-card h-[calc(100vh-8rem)] overflow-hidden">
+            <div className="border rounded-lg bg-card h-[calc(100vh-10rem)] sm:h-[calc(100vh-9rem)] lg:h-[calc(100vh-8rem)] overflow-hidden">
               <EmailDetailView
                 email={selectedEmail}
                 onBack={handleBack}
@@ -201,7 +205,7 @@ function InboxPage() {
               />
             </div>
           ) : (
-            <div className="border rounded-lg bg-card h-[calc(100vh-8rem)] flex items-center justify-center text-muted-foreground">
+            <div className="border rounded-lg bg-card h-[calc(100vh-10rem)] sm:h-[calc(100vh-9rem)] lg:h-[calc(100vh-8rem)] flex items-center justify-center text-muted-foreground text-sm">
               Select an email to read
             </div>
           )}

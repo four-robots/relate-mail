@@ -101,10 +101,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serve static files (frontend)
+app.UseStaticFiles();
+app.UseDefaultFiles();
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<EmailHub>("/hubs/email");
+
+// Fallback to index.html for SPA routing
+app.MapFallbackToFile("index.html");
 
 app.Run();

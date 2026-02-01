@@ -23,19 +23,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Update="appsettings.Production.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		  <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-		</Content>
 		<Content Update="appsettings.Development.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<CopyToPublishDirectory>Never</CopyToPublishDirectory>
 		</Content>
 		<Content Update="appsettings.json">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
-		</Content>
-		<Content Update="appsettings.Production.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 			<CopyToPublishDirectory>Always</CopyToPublishDirectory>
 		</Content>
@@ -54,6 +46,10 @@
 		<Content Remove="$(SpaRoot)**" />
 		<None Remove="$(SpaRoot)**" />
 		<None Include="$(SpaRoot)**" Link="clientapp\%(RecursiveDir)%(Filename)%(Extension)" Exclude="$(SpaRoot)node_modules\**;$(SpaRoot)test-results\**;$(SpaRoot)dist\**;$(SpaRoot).tanstack\**;$(SpaRoot)coverage\**;$(SpaRoot).vscode\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Properties\PublishProfiles\" />
 	</ItemGroup>
 
 	<!-- Build client app and copy to wwwroot before publish -->

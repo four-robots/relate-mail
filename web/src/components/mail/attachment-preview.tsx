@@ -36,52 +36,54 @@ export function AttachmentPreview({ emailId, attachment }: AttachmentPreviewProp
 
   return (
     <>
-      <div className="flex items-center justify-between p-3 border rounded-md hover:bg-muted">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border rounded-md hover:bg-muted gap-2 sm:gap-0">
+        <div className="flex items-center gap-3 flex-1 min-w-0 w-full sm:w-auto">
           <File className="h-5 w-5 text-muted-foreground flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">{attachment.fileName}</div>
+            <div className="text-xs sm:text-sm font-medium truncate">{attachment.fileName}</div>
             <div className="text-xs text-muted-foreground">
               {formatFileSize(attachment.sizeBytes)} • {attachment.contentType}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-1 ml-2">
+        <div className="flex gap-1 ml-2 w-full sm:w-auto">
           {canPreview && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsPreviewOpen(true)}
+              className="flex-1 sm:flex-none min-h-[44px] text-xs sm:text-sm"
             >
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
+              <Eye className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Preview</span>
             </Button>
           )}
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
-            <Download className="h-4 w-4 mr-1" />
-            Download
+          <Button variant="ghost" size="sm" onClick={handleDownload} className="flex-1 sm:flex-none min-h-[44px] text-xs sm:text-sm">
+            <Download className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Download</span>
           </Button>
         </div>
       </div>
 
       {/* Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] p-3 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span className="truncate mr-4">{attachment.fileName}</span>
+              <span className="truncate mr-4 text-sm sm:text-base">{attachment.fileName}</span>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsPreviewOpen(false)}
+                className="min-h-[44px]"
               >
                 <X className="h-4 w-4" />
               </Button>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="overflow-auto max-h-[calc(90vh-8rem)]">
+          <div className="overflow-auto max-h-[calc(90vh-10rem)] sm:max-h-[calc(90vh-8rem)]">
             {isImage && (
               <img
                 src={downloadUrl}
@@ -93,17 +95,17 @@ export function AttachmentPreview({ emailId, attachment }: AttachmentPreviewProp
             {isPdf && (
               <iframe
                 src={downloadUrl}
-                className="w-full h-[70vh] border-0"
+                className="w-full h-[50vh] sm:h-[70vh] border-0"
                 title={attachment.fileName}
               />
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)} className="min-h-[44px]">
               Close
             </Button>
-            <Button onClick={handleDownload}>
+            <Button onClick={handleDownload} className="min-h-[44px]">
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>
