@@ -1,10 +1,5 @@
 name: Build Mobile App
 
-# NOTE: EAS builds are temporarily disabled due to nativewind 4.x requiring
-# react-native-worklets, which only supports React Native 0.78+.
-# Expo SDK 52 uses RN 0.76.9, causing build failures.
-# Re-enable EAS builds after upgrading to Expo SDK 53+ with RN 0.78+.
-
 on:
   push:
     branches:
@@ -70,13 +65,11 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:coverage
 
-  # EAS builds disabled until Expo SDK 53+ upgrade (see note at top of file)
   build-android:
     name: Build Android
     needs: lint-typecheck-test
     runs-on: ubuntu-latest
-    # Disabled: nativewind 4.x + react-native-worklets incompatible with RN 0.76
-    if: false && (github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android')
+    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android'
     defaults:
       run:
         working-directory: mobile
@@ -134,8 +127,7 @@ jobs:
     name: Build iOS
     needs: lint-typecheck-test
     runs-on: ubuntu-latest
-    # Disabled: nativewind 4.x + react-native-worklets incompatible with RN 0.76
-    if: false && (github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios')
+    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios'
     defaults:
       run:
         working-directory: mobile
