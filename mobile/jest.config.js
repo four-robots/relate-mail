@@ -1,7 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
-  // Use React Native's Jest preset as base
-  preset: 'react-native',
+  // Use jest-expo preset for Expo SDK 52 compatibility
+  preset: 'jest-expo',
   setupFilesAfterEnv: [
     '@testing-library/jest-native/extend-expect',
     '<rootDir>/jest.setup.js',
