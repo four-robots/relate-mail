@@ -90,8 +90,10 @@ test.describe('Inbox', () => {
   test('handles pagination if available', async ({ page }) => {
     // Look for pagination controls
     const nextButton = page.getByRole('button', { name: /next/i })
+    const prevButton = page.getByRole('button', { name: /prev/i })
 
     const hasNextButton = await nextButton.isVisible().catch(() => false)
+    await prevButton.isVisible().catch(() => false)
 
     if (hasNextButton) {
       // Check if pagination exists
