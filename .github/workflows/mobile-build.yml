@@ -1,5 +1,10 @@
 name: Build Mobile App
 
+# NOTE: EAS builds are temporarily disabled due to nativewind 4.x requiring
+# react-native-worklets, which only supports React Native 0.78+.
+# Expo SDK 52 uses RN 0.76.9, causing build failures.
+# Re-enable EAS builds after upgrading to Expo SDK 53+ with RN 0.78+.
+
 on:
   push:
     branches:
@@ -7,6 +12,9 @@ on:
     paths:
       - 'mobile/**'
       - '.github/workflows/mobile-build.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
   workflow_dispatch:
     inputs:
       platform:
@@ -32,8 +40,8 @@ env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
 jobs:
-  lint-and-typecheck:
-    name: Lint & Type Check
+  lint-typecheck-test:
+    name: Lint, Type Check & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,11 +67,16 @@ jobs:
       - name: Run ESLint
         run: npm run lint || true
 
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+  # EAS builds disabled until Expo SDK 53+ upgrade (see note at top of file)
   build-android:
     name: Build Android
-    needs: lint-and-typecheck
+    needs: lint-typecheck-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android'
+    # Disabled: nativewind 4.x + react-native-worklets incompatible with RN 0.76
+    if: false && (github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'android')
     defaults:
       run:
         working-directory: mobile
@@ -119,9 +132,10 @@ jobs:
 
   build-ios:
     name: Build iOS
-    needs: lint-and-typecheck
+    needs: lint-typecheck-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios'
+    # Disabled: nativewind 4.x + react-native-worklets incompatible with RN 0.76
+    if: false && (github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'ios')
     defaults:
       run:
         working-directory: mobile
