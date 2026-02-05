@@ -49,10 +49,20 @@ pub fn run() {
             commands::auth::save_credentials,
             commands::auth::load_credentials,
             commands::auth::clear_credentials,
+            commands::auth::load_accounts,
+            commands::auth::get_account_api_key,
+            commands::auth::save_account,
+            commands::auth::delete_account,
+            commands::auth::set_active_account,
+            commands::auth::generate_account_id,
             commands::settings::get_settings,
             commands::settings::save_settings,
             commands::tray::set_tray_tooltip,
             commands::tray::set_badge_count,
+            commands::oidc::discover_server,
+            commands::oidc::start_oidc_auth,
+            commands::oidc::fetch_profile_with_jwt,
+            commands::oidc::create_api_key_with_jwt,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

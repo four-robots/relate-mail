@@ -1,71 +1,96 @@
+import { useState } from 'react'
+import { useAtomValue } from 'jotai'
 import { Button } from '@relate/shared/components/ui'
-import { Inbox, Send, KeyRound, Settings, LogOut } from 'lucide-react'
-import { useSetAtom } from 'jotai'
-import { logoutAtom } from '@/stores/auth'
+import { Inbox, Send, KeyRound, ChevronRight } from 'lucide-react'
+import { Avatar } from './Avatar'
+import { AccountSwitcher } from './AccountSwitcher'
+import { activeAccountAtom } from '@/stores/accounts'
+import { getHostname } from '@/lib/utils'
 
 type View = 'inbox' | 'sent' | 'smtp-settings' | 'settings'
 
 interface SidebarProps {
   currentView: View
   onNavigate: (view: View) => void
+  onAddAccount: () => void
 }
 
-export function Sidebar({ currentView, onNavigate }: SidebarProps) {
-  const logout = useSetAtom(logoutAtom)
+export function Sidebar({ currentView, onNavigate, onAddAccount }: SidebarProps) {
+  const activeAccount = useAtomValue(activeAccountAtom)
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false)
+
+  const handleOpenSettings = () => {
+    onNavigate('settings')
+  }
 
   return (
-    <aside className="w-64 border-r bg-card flex flex-col">
-      <div className="p-4 border-b">
-        <h1 className="text-lg font-semibold">Relate Mail</h1>
-      </div>
+    <>
+      <aside className="w-56 border-r bg-card flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b">
+          <h1 className="text-lg font-semibold">Relate Mail</h1>
+        </div>
 
-      <nav className="flex-1 p-2">
-        <div className="space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 p-2 space-y-1">
           <Button
             variant={currentView === 'inbox' ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
+            className="w-full justify-start gap-2"
             onClick={() => onNavigate('inbox')}
           >
-            <Inbox className="h-4 w-4 mr-2" />
+            <Inbox className="h-4 w-4" />
             Inbox
           </Button>
           <Button
             variant={currentView === 'sent' ? 'secondary' : 'ghost'}
-            className="w-full justify-start"
+            className="w-full justify-start gap-2"
             onClick={() => onNavigate('sent')}
           >
-            <Send className="h-4 w-4 mr-2" />
+            <Send className="h-4 w-4" />
             Sent
           </Button>
-        </div>
-      </nav>
+          <Button
+            variant={currentView === 'smtp-settings' ? 'secondary' : 'ghost'}
+            className="w-full justify-start gap-2"
+            onClick={() => onNavigate('smtp-settings')}
+          >
+            <KeyRound className="h-4 w-4" />
+            SMTP Settings
+          </Button>
+        </nav>
 
-      <div className="p-2 border-t space-y-1">
-        <Button
-          variant={currentView === 'smtp-settings' ? 'secondary' : 'ghost'}
-          className="w-full justify-start"
-          onClick={() => onNavigate('smtp-settings')}
-        >
-          <KeyRound className="h-4 w-4 mr-2" />
-          SMTP Settings
-        </Button>
-        <Button
-          variant={currentView === 'settings' ? 'secondary' : 'ghost'}
-          className="w-full justify-start"
-          onClick={() => onNavigate('settings')}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Preferences
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-destructive hover:text-destructive"
-          onClick={() => logout()}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
-      </div>
-    </aside>
+        {/* Account section at bottom */}
+        {activeAccount && (
+          <div className="p-2 border-t">
+            <button
+              onClick={() => setAccountDialogOpen(true)}
+              className="w-full p-2 rounded-lg hover:bg-accent flex items-center gap-3 transition-colors"
+            >
+              <Avatar
+                name={activeAccount.display_name}
+                email={activeAccount.user_email}
+                size="sm"
+              />
+              <div className="flex-1 text-left min-w-0">
+                <div className="text-sm font-medium truncate">
+                  {activeAccount.display_name || activeAccount.user_email}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {getHostname(activeAccount.server_url)}
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            </button>
+          </div>
+        )}
+      </aside>
+
+      <AccountSwitcher
+        open={accountDialogOpen}
+        onOpenChange={setAccountDialogOpen}
+        onAddAccount={onAddAccount}
+        onOpenSettings={handleOpenSettings}
+      />
+    </>
   )
 }
