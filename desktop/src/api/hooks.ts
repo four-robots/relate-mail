@@ -10,6 +10,13 @@ export function useEmails(page = 1, pageSize = 20) {
   })
 }
 
+export function useSentEmails(page = 1, pageSize = 20) {
+  return useQuery({
+    queryKey: ['sent-emails', page, pageSize],
+    queryFn: () => apiGet<EmailListResponse>(`/emails/sent?page=${page}&pageSize=${pageSize}`),
+  })
+}
+
 export function useEmail(id: string) {
   return useQuery({
     queryKey: ['email', id],

@@ -2,8 +2,10 @@ use crate::commands::AppState;
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 use tauri::State;
+use uuid::Uuid;
 
 const SERVICE_NAME: &str = "com.relate.mail.desktop";
+const ACCOUNTS_KEY: &str = "accounts";
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthError {
@@ -11,6 +13,8 @@ pub enum AuthError {
     KeyringError(String),
     #[error("Serialization error: {0}")]
     SerializationError(String),
+    #[error("Account not found: {0}")]
+    AccountNotFound(String),
 }
 
 impl serde::Serialize for AuthError {
@@ -22,12 +26,251 @@ impl serde::Serialize for AuthError {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Account {
+    pub id: String,
+    pub display_name: String,
+    pub server_url: String,
+    pub user_email: String,
+    pub api_key_id: String,
+    pub scopes: Vec<String>,
+    pub created_at: String,
+    pub last_used_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct AccountsData {
+    pub accounts: Vec<Account>,
+    pub active_account_id: Option<String>,
+}
+
+impl Default for AccountsData {
+    fn default() -> Self {
+        Self {
+            accounts: Vec::new(),
+            active_account_id: None,
+        }
+    }
+}
+
+// Legacy credential structure for migration
 #[derive(Serialize, Deserialize)]
 pub struct Credentials {
     pub server_url: String,
     pub api_key: String,
     pub user_email: String,
 }
+
+fn get_accounts_entry() -> Result<Entry, AuthError> {
+    Entry::new(SERVICE_NAME, ACCOUNTS_KEY).map_err(|e| AuthError::KeyringError(e.to_string()))
+}
+
+fn get_api_key_entry(account_id: &str) -> Result<Entry, AuthError> {
+    Entry::new(SERVICE_NAME, &format!("api_key_{}", account_id))
+        .map_err(|e| AuthError::KeyringError(e.to_string()))
+}
+
+fn load_accounts_data() -> Result<AccountsData, AuthError> {
+    let entry = get_accounts_entry()?;
+
+    match entry.get_password() {
+        Ok(json) => serde_json::from_str(&json)
+            .map_err(|e| AuthError::SerializationError(e.to_string())),
+        Err(keyring::Error::NoEntry) => Ok(AccountsData::default()),
+        Err(e) => Err(AuthError::KeyringError(e.to_string())),
+    }
+}
+
+fn save_accounts_data(data: &AccountsData) -> Result<(), AuthError> {
+    let entry = get_accounts_entry()?;
+    let json = serde_json::to_string(data)
+        .map_err(|e| AuthError::SerializationError(e.to_string()))?;
+
+    entry
+        .set_password(&json)
+        .map_err(|e| AuthError::KeyringError(e.to_string()))
+}
+
+fn get_api_key_for_account(account_id: &str) -> Result<Option<String>, AuthError> {
+    let entry = get_api_key_entry(account_id)?;
+
+    match entry.get_password() {
+        Ok(key) => Ok(Some(key)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(AuthError::KeyringError(e.to_string())),
+    }
+}
+
+fn save_api_key_for_account(account_id: &str, api_key: &str) -> Result<(), AuthError> {
+    let entry = get_api_key_entry(account_id)?;
+    entry
+        .set_password(api_key)
+        .map_err(|e| AuthError::KeyringError(e.to_string()))
+}
+
+fn delete_api_key_for_account(account_id: &str) -> Result<(), AuthError> {
+    let entry = get_api_key_entry(account_id)?;
+    // Ignore error if entry doesn't exist
+    let _ = entry.delete_credential();
+    Ok(())
+}
+
+/// Load all accounts and return with active account info
+#[tauri::command]
+pub async fn load_accounts(
+    state: State<'_, AppState>,
+) -> Result<AccountsData, AuthError> {
+    let data = load_accounts_data()?;
+
+    // If there's an active account, update AppState
+    if let Some(active_id) = &data.active_account_id {
+        if let Some(account) = data.accounts.iter().find(|a| &a.id == active_id) {
+            if let Some(api_key) = get_api_key_for_account(&account.id)? {
+                *state.server_url.write().unwrap() = Some(account.server_url.clone());
+                *state.api_key.write().unwrap() = Some(api_key);
+            }
+        }
+    }
+
+    Ok(data)
+}
+
+/// Get the API key for a specific account
+#[tauri::command]
+pub async fn get_account_api_key(account_id: String) -> Result<Option<String>, AuthError> {
+    get_api_key_for_account(&account_id)
+}
+
+/// Save a new account with its API key
+#[tauri::command]
+pub async fn save_account(
+    account: Account,
+    api_key: String,
+    state: State<'_, AppState>,
+) -> Result<AccountsData, AuthError> {
+    let mut data = load_accounts_data()?;
+
+    // Check if account with same server_url and user_email already exists
+    let existing_idx = data.accounts.iter().position(|a| {
+        a.server_url == account.server_url && a.user_email == account.user_email
+    });
+
+    if let Some(idx) = existing_idx {
+        // Update existing account
+        let existing_id = data.accounts[idx].id.clone();
+        data.accounts[idx] = Account {
+            id: existing_id.clone(),
+            ..account
+        };
+        // Update the API key
+        save_api_key_for_account(&existing_id, &api_key)?;
+        data.active_account_id = Some(existing_id);
+    } else {
+        // Save the API key for this account
+        save_api_key_for_account(&account.id, &api_key)?;
+
+        // Set as active account
+        data.active_account_id = Some(account.id.clone());
+
+        // Add to accounts list
+        data.accounts.push(account.clone());
+    }
+
+    save_accounts_data(&data)?;
+
+    // Update AppState with the new active account
+    let active_id = data.active_account_id.as_ref().unwrap();
+    let active_account = data.accounts.iter().find(|a| &a.id == active_id).unwrap();
+    *state.server_url.write().unwrap() = Some(active_account.server_url.clone());
+    *state.api_key.write().unwrap() = Some(api_key);
+
+    Ok(data)
+}
+
+/// Delete an account and its API key
+#[tauri::command]
+pub async fn delete_account(
+    account_id: String,
+    state: State<'_, AppState>,
+) -> Result<AccountsData, AuthError> {
+    let mut data = load_accounts_data()?;
+
+    // Remove the account
+    data.accounts.retain(|a| a.id != account_id);
+
+    // Delete the API key
+    delete_api_key_for_account(&account_id)?;
+
+    // If we deleted the active account, switch to the first remaining one
+    if data.active_account_id.as_ref() == Some(&account_id) {
+        data.active_account_id = data.accounts.first().map(|a| a.id.clone());
+
+        // Update AppState
+        if let Some(new_active_id) = &data.active_account_id {
+            if let Some(account) = data.accounts.iter().find(|a| &a.id == new_active_id) {
+                if let Some(api_key) = get_api_key_for_account(&account.id)? {
+                    *state.server_url.write().unwrap() = Some(account.server_url.clone());
+                    *state.api_key.write().unwrap() = Some(api_key);
+                }
+            }
+        } else {
+            // No accounts left, clear AppState
+            *state.server_url.write().unwrap() = None;
+            *state.api_key.write().unwrap() = None;
+        }
+    }
+
+    save_accounts_data(&data)?;
+
+    Ok(data)
+}
+
+/// Set the active account and update AppState
+#[tauri::command]
+pub async fn set_active_account(
+    account_id: String,
+    state: State<'_, AppState>,
+) -> Result<Account, AuthError> {
+    let mut data = load_accounts_data()?;
+
+    // Find the account
+    let account = data
+        .accounts
+        .iter()
+        .find(|a| a.id == account_id)
+        .ok_or_else(|| AuthError::AccountNotFound(account_id.clone()))?
+        .clone();
+
+    // Get the API key
+    let api_key = get_api_key_for_account(&account_id)?
+        .ok_or_else(|| AuthError::KeyringError("API key not found".to_string()))?;
+
+    // Update active account
+    data.active_account_id = Some(account_id.clone());
+
+    // Update last_used_at
+    if let Some(acc) = data.accounts.iter_mut().find(|a| a.id == account_id) {
+        acc.last_used_at = chrono::Utc::now().to_rfc3339();
+    }
+
+    save_accounts_data(&data)?;
+
+    // Update AppState
+    *state.server_url.write().unwrap() = Some(account.server_url.clone());
+    *state.api_key.write().unwrap() = Some(api_key);
+
+    Ok(account)
+}
+
+/// Generate a new unique account ID
+#[tauri::command]
+pub fn generate_account_id() -> String {
+    Uuid::new_v4().to_string()
+}
+
+// ============================================================================
+// Legacy commands for backwards compatibility during migration
+// ============================================================================
 
 #[tauri::command]
 pub async fn save_credentials(

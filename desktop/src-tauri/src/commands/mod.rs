@@ -1,5 +1,6 @@
 pub mod api;
 pub mod auth;
+pub mod oidc;
 pub mod settings;
 pub mod tray;
 

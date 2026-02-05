@@ -1,79 +1,181 @@
 import { useState, useEffect } from 'react'
-import { useSetAtom } from 'jotai'
+import { useSetAtom, useAtomValue } from 'jotai'
 import { invoke } from '@tauri-apps/api/core'
-import { loginAtom } from '@/stores/auth'
-import { Button, Input, Label, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@relate/shared/components/ui'
+import { Loader2 } from 'lucide-react'
+import {
+  Button,
+  Input,
+  Label,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@relate/shared/components/ui'
+import {
+  addAccountAtom,
+  loadAccountsAtom,
+  accountsLoadedAtom,
+  hasAccountsAtom,
+  generateAccountId,
+  type Account,
+} from '@/stores/accounts'
 
-interface Credentials {
-  server_url: string
-  api_key: string
-  user_email: string
+interface OidcConfig {
+  authority: string
+  client_id: string
+  scopes: string | null
 }
 
-export function Login() {
-  const login = useSetAtom(loginAtom)
+interface ServerDiscovery {
+  discovery: unknown
+  oidc_config: OidcConfig | null
+}
+
+interface TokenResponse {
+  access_token: string
+  id_token: string | null
+  refresh_token: string | null
+  expires_in: number | null
+  token_type: string | null
+}
+
+interface UserProfile {
+  id: string
+  email: string
+  display_name: string | null
+}
+
+interface ApiKeyResponse {
+  id: string
+  name: string
+  apiKey: string
+  scopes: string[] | null
+  createdAt: string
+}
+
+type Step = 'url' | 'discovering' | 'authenticating' | 'creating-key'
+
+const stepMessages: Record<Exclude<Step, 'url'>, string> = {
+  discovering: 'Connecting to server...',
+  authenticating: 'Waiting for authentication...',
+  'creating-key': 'Setting up your account...',
+}
+
+interface LoginProps {
+  onLoginComplete?: () => void
+}
+
+export function Login({ onLoginComplete }: LoginProps) {
+  const addAccount = useSetAtom(addAccountAtom)
+  const loadAccounts = useSetAtom(loadAccountsAtom)
+  const accountsLoaded = useAtomValue(accountsLoadedAtom)
+  const hasAccounts = useAtomValue(hasAccountsAtom)
   const [serverUrl, setServerUrl] = useState('')
-  const [email, setEmail] = useState('')
-  const [apiKey, setApiKey] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [isCheckingStored, setIsCheckingStored] = useState(true)
+  const [step, setStep] = useState<Step>('url')
+  const [isInitializing, setIsInitializing] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Try to load stored credentials on mount
   useEffect(() => {
-    async function loadStoredCredentials() {
+    async function initialize() {
       try {
-        const credentials = await invoke<Credentials | null>('load_credentials')
-        if (credentials) {
-          login({
-            serverUrl: credentials.server_url,
-            apiKey: credentials.api_key,
-            userEmail: credentials.user_email,
-          })
-        }
+        await loadAccounts()
       } catch (err) {
-        console.error('Failed to load credentials:', err)
+        console.error('Failed to load accounts:', err)
       } finally {
-        setIsCheckingStored(false)
+        setIsInitializing(false)
       }
     }
-    loadStoredCredentials()
-  }, [login])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    if (!accountsLoaded) {
+      initialize()
+    } else {
+      setIsInitializing(false)
+    }
+  }, [loadAccounts, accountsLoaded])
+
+  // If accounts are loaded and user has accounts, trigger callback
+  useEffect(() => {
+    if (accountsLoaded && hasAccounts && onLoginComplete) {
+      onLoginComplete()
+    }
+  }, [accountsLoaded, hasAccounts, onLoginComplete])
+
+  const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError(null)
 
+    // Normalize URL
+    let normalizedUrl = serverUrl.trim()
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      normalizedUrl = `https://${normalizedUrl}`
+    }
+    normalizedUrl = normalizedUrl.replace(/\/$/, '')
+
     try {
-      // Normalize the server URL
-      let normalizedUrl = serverUrl.trim()
-      if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
-        normalizedUrl = `https://${normalizedUrl}`
+      // Step 1: Discover server
+      setStep('discovering')
+      const discovery = await invoke<ServerDiscovery>('discover_server', {
+        serverUrl: normalizedUrl,
+      })
+
+      if (!discovery.oidc_config) {
+        throw new Error('This server does not have OIDC authentication enabled.')
       }
-      // Remove trailing slash
-      normalizedUrl = normalizedUrl.replace(/\/$/, '')
 
-      // Save credentials to secure storage
-      await invoke('save_credentials', {
-        serverUrl: normalizedUrl,
-        apiKey,
-        userEmail: email,
+      const { authority, client_id, scopes } = discovery.oidc_config
+
+      // Step 2: OIDC authentication
+      setStep('authenticating')
+      const tokens = await invoke<TokenResponse>('start_oidc_auth', {
+        authority,
+        clientId: client_id,
+        scopes,
       })
 
-      login({
+      // Step 3: Fetch profile and create API key
+      setStep('creating-key')
+      const profile = await invoke<UserProfile>('fetch_profile_with_jwt', {
         serverUrl: normalizedUrl,
-        apiKey,
-        userEmail: email,
+        jwtToken: tokens.access_token,
       })
+
+      const apiKeyResp = await invoke<ApiKeyResponse>('create_api_key_with_jwt', {
+        serverUrl: normalizedUrl,
+        jwtToken: tokens.access_token,
+        deviceName: 'Relate Mail Desktop',
+        platform: navigator.userAgent.includes('Mac') ? 'macos' : 'windows',
+      })
+
+      // Step 4: Generate account ID and save account
+      const accountId = await generateAccountId()
+      const now = new Date().toISOString()
+
+      const account: Account = {
+        id: accountId,
+        display_name: profile.display_name ?? profile.email,
+        server_url: normalizedUrl,
+        user_email: profile.email,
+        api_key_id: apiKeyResp.id,
+        scopes: apiKeyResp.scopes ?? ['smtp', 'pop3', 'imap', 'api:read', 'api:write'],
+        created_at: now,
+        last_used_at: now,
+      }
+
+      await addAccount({ account, apiKey: apiKeyResp.apiKey })
+
+      // Notify parent that login is complete
+      if (onLoginComplete) {
+        onLoginComplete()
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect')
-    } finally {
-      setIsLoading(false)
+      setError(typeof err === 'string' ? err : err instanceof Error ? err.message : 'Connection failed')
+      setStep('url')
     }
   }
 
-  if (isCheckingStored) {
+  if (isInitializing) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-muted-foreground">Loading...</div>
@@ -81,68 +183,53 @@ export function Login() {
     )
   }
 
+  // If user has accounts, don't show login (App.tsx will handle this)
+  if (hasAccounts) {
+    return null
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Relate Mail</CardTitle>
-          <CardDescription>
-            Connect to your Relate Mail server
-          </CardDescription>
+          <CardDescription>Connect to your Relate Mail server</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                {error}
+        {step === 'url' ? (
+          <form onSubmit={handleConnect}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="serverUrl">Server URL</Label>
+                <Input
+                  id="serverUrl"
+                  type="text"
+                  placeholder="mail.example.com"
+                  value={serverUrl}
+                  onChange={(e) => setServerUrl(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  You'll be redirected to your organization's login page
+                </p>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="serverUrl">Server URL</Label>
-              <Input
-                id="serverUrl"
-                type="text"
-                placeholder="mail.example.com"
-                value={serverUrl}
-                onChange={(e) => setServerUrl(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="apiKey">API Key</Label>
-              <Input
-                id="apiKey"
-                type="password"
-                placeholder="Your API key"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Generate an API key from the web interface under SMTP Settings
-              </p>
-            </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" className="w-full">
+                Connect
+              </Button>
+            </CardFooter>
+          </form>
+        ) : (
+          <CardContent className="flex flex-col items-center gap-3 py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">{stepMessages[step]}</p>
           </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Connecting...' : 'Connect'}
-            </Button>
-          </CardFooter>
-        </form>
+        )}
       </Card>
     </div>
   )
