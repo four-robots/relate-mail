@@ -68,36 +68,40 @@ class SignalRConnection {
     }
   }
 
-  onNewEmail(handler: NewEmailHandler) {
+  onNewEmail(handler: NewEmailHandler): () => void {
     if (!this.connection) {
       console.warn('SignalR connection not established');
-      return;
+      return () => {};
     }
     this.connection.on('NewEmail', handler);
+    return () => this.connection?.off('NewEmail', handler);
   }
 
-  onEmailUpdated(handler: EmailUpdatedHandler) {
+  onEmailUpdated(handler: EmailUpdatedHandler): () => void {
     if (!this.connection) {
       console.warn('SignalR connection not established');
-      return;
+      return () => {};
     }
     this.connection.on('EmailUpdated', handler);
+    return () => this.connection?.off('EmailUpdated', handler);
   }
 
-  onEmailDeleted(handler: EmailDeletedHandler) {
+  onEmailDeleted(handler: EmailDeletedHandler): () => void {
     if (!this.connection) {
       console.warn('SignalR connection not established');
-      return;
+      return () => {};
     }
     this.connection.on('EmailDeleted', handler);
+    return () => this.connection?.off('EmailDeleted', handler);
   }
 
-  onUnreadCountChanged(handler: UnreadCountChangedHandler) {
+  onUnreadCountChanged(handler: UnreadCountChangedHandler): () => void {
     if (!this.connection) {
       console.warn('SignalR connection not established');
-      return;
+      return () => {};
     }
     this.connection.on('UnreadCountChanged', handler);
+    return () => this.connection?.off('UnreadCountChanged', handler);
   }
 
   async disconnect() {

@@ -72,7 +72,17 @@ public class Pop3ServerHostedService : BackgroundService
                 _logger.LogDebug("Connection accepted from {Endpoint} (SSL: {UseSsl})", endpoint, useSsl);
 
                 // Handle client in background
-                _ = Task.Run(() => HandleClientAsync(client, useSsl, ct), ct);
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await HandleClientAsync(client, useSsl, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Unhandled exception in client handler for {Endpoint}", endpoint);
+                    }
+                }, ct);
             }
             catch (OperationCanceledException)
             {

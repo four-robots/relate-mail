@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using Relate.Smtp.Core.Entities;
 using Relate.Smtp.Core.Interfaces;
@@ -15,11 +16,16 @@ public class Pop3MessageManager
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<Pop3MessageManager> _logger;
+    private readonly Pop3ServerOptions _options;
 
-    public Pop3MessageManager(IServiceProvider serviceProvider, ILogger<Pop3MessageManager> logger)
+    public Pop3MessageManager(
+        IServiceProvider serviceProvider,
+        ILogger<Pop3MessageManager> logger,
+        IOptions<Pop3ServerOptions> options)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _options = options.Value;
     }
 
     public async Task<List<Pop3Message>> LoadMessagesAsync(Guid userId, CancellationToken ct)
@@ -30,8 +36,8 @@ public class Pop3MessageManager
         using var scope = _serviceProvider.CreateScope();
         var emailRepo = scope.ServiceProvider.GetRequiredService<IEmailRepository>();
 
-        // Load all emails for user (POP3 loads everything on auth)
-        var emails = await emailRepo.GetByUserIdAsync(userId, 0, int.MaxValue, ct);
+        // Load emails for user with configurable limit
+        var emails = await emailRepo.GetByUserIdAsync(userId, 0, _options.MaxMessagesPerSession, ct);
 
         var messages = new List<Pop3Message>();
         int messageNumber = 1;
