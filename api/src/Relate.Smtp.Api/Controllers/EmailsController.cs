@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MimeKit;
 using Relate.Smtp.Api.Models;
 using Relate.Smtp.Api.Services;
@@ -13,6 +14,7 @@ namespace Relate.Smtp.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[EnableRateLimiting("api")]
 public class EmailsController : ControllerBase
 {
     private readonly IEmailRepository _emailRepository;
@@ -106,6 +108,7 @@ public class EmailsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}")]
+    [EnableRateLimiting("write")]
     public async Task<ActionResult<EmailDetailDto>> UpdateEmail(
         Guid id,
         [FromBody] UpdateEmailRequest request,
@@ -143,6 +146,7 @@ public class EmailsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [EnableRateLimiting("write")]
     public async Task<IActionResult> DeleteEmail(Guid id, CancellationToken cancellationToken = default)
     {
         var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
@@ -359,6 +363,7 @@ public class EmailsController : ControllerBase
     }
 
     [HttpPost("bulk/mark-read")]
+    [EnableRateLimiting("write")]
     public async Task<IActionResult> BulkMarkRead([FromBody] BulkEmailOperationRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
@@ -369,6 +374,7 @@ public class EmailsController : ControllerBase
     }
 
     [HttpPost("bulk/delete")]
+    [EnableRateLimiting("write")]
     public async Task<IActionResult> BulkDelete([FromBody] BulkEmailOperationRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
