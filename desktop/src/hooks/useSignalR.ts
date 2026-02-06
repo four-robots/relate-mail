@@ -18,6 +18,7 @@ export function useSignalR(serverUrl: string | null, apiKey: string | null) {
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
   const setupDoneRef = useRef(false)
+  const unsubscribersRef = useRef<(() => void)[]>([])
 
   useEffect(() => {
     if (!serverUrl || !apiKey) {
@@ -43,23 +44,23 @@ export function useSignalR(serverUrl: string | null, apiKey: string | null) {
         setupDoneRef.current = true
         setIsConnected(true)
 
-        onNewEmail(() => {
-          queryClient.invalidateQueries({ queryKey: ['emails'] })
-          notifyNewEmails()
-        })
-
-        onEmailUpdated((emailId: string) => {
-          queryClient.invalidateQueries({ queryKey: ['emails'] })
-          queryClient.invalidateQueries({ queryKey: ['email', emailId] })
-        })
-
-        onEmailDeleted(() => {
-          queryClient.invalidateQueries({ queryKey: ['emails'] })
-        })
-
-        onUnreadCountChanged((count: number) => {
-          invoke('set_badge_count', { count }).catch(() => {})
-        })
+        // Store unsubscribe functions to prevent memory leaks
+        unsubscribersRef.current = [
+          onNewEmail(() => {
+            queryClient.invalidateQueries({ queryKey: ['emails'] })
+            notifyNewEmails()
+          }),
+          onEmailUpdated((emailId: string) => {
+            queryClient.invalidateQueries({ queryKey: ['emails'] })
+            queryClient.invalidateQueries({ queryKey: ['email', emailId] })
+          }),
+          onEmailDeleted(() => {
+            queryClient.invalidateQueries({ queryKey: ['emails'] })
+          }),
+          onUnreadCountChanged((count: number) => {
+            invoke('set_badge_count', { count }).catch(() => {})
+          }),
+        ]
 
         onReconnecting(() => {
           setIsConnected(false)
@@ -84,6 +85,9 @@ export function useSignalR(serverUrl: string | null, apiKey: string | null) {
 
     return () => {
       isCancelled = true
+      // Unsubscribe from all event handlers to prevent memory leaks
+      unsubscribersRef.current.forEach(unsub => unsub())
+      unsubscribersRef.current = []
       if (setupDoneRef.current) {
         disconnect()
         setupDoneRef.current = false

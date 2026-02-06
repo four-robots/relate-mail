@@ -63,9 +63,16 @@ public class CustomUserAuthenticator : IUserAuthenticator
             // Update LastUsedAt in background
             _ = Task.Run(async () =>
             {
-                using var scope = _serviceProvider.CreateScope();
-                var apiKeyRepo = scope.ServiceProvider.GetRequiredService<ISmtpApiKeyRepository>();
-                await apiKeyRepo.UpdateLastUsedAsync(cached.KeyId, DateTimeOffset.UtcNow, CancellationToken.None);
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var apiKeyRepo = scope.ServiceProvider.GetRequiredService<ISmtpApiKeyRepository>();
+                    await apiKeyRepo.UpdateLastUsedAsync(cached.KeyId, DateTimeOffset.UtcNow, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to update LastUsedAt for cached API key {KeyId}", cached.KeyId);
+                }
             }, CancellationToken.None);
 
             return cached.IsAuthenticated;

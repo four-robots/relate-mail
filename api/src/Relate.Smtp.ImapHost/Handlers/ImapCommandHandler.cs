@@ -772,22 +772,22 @@ public class ImapCommandHandler
             if (part.Contains(':'))
             {
                 var range = part.Split(':');
-                int start, end;
+                uint start, end;
 
                 if (range[0] == "*")
                 {
-                    start = useUid ? messages.Max(m => (int)m.Uid) : messages.Count;
+                    start = useUid ? messages.Max(m => m.Uid) : (uint)messages.Count;
                 }
-                else if (!int.TryParse(range[0], out start))
+                else if (!uint.TryParse(range[0], out start))
                 {
                     continue;
                 }
 
                 if (range[1] == "*")
                 {
-                    end = useUid ? messages.Max(m => (int)m.Uid) : messages.Count;
+                    end = useUid ? messages.Max(m => m.Uid) : (uint)messages.Count;
                 }
-                else if (!int.TryParse(range[1], out end))
+                else if (!uint.TryParse(range[1], out end))
                 {
                     continue;
                 }
@@ -799,7 +799,7 @@ public class ImapCommandHandler
 
                 foreach (var msg in messages)
                 {
-                    var value = useUid ? (int)msg.Uid : msg.SequenceNumber;
+                    var value = useUid ? msg.Uid : (uint)msg.SequenceNumber;
                     if (value >= start && value <= end && !results.Contains(msg))
                     {
                         results.Add(msg);
@@ -808,7 +808,7 @@ public class ImapCommandHandler
             }
             else
             {
-                if (!int.TryParse(part, out var num))
+                if (!uint.TryParse(part, out var num))
                 {
                     continue;
                 }

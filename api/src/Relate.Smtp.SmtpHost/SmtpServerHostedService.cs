@@ -15,6 +15,8 @@ public class SmtpServerOptions
     public bool RequireAuthentication { get; set; } = true;
     public string? CertificatePath { get; set; }
     public string? CertificatePassword { get; set; }
+    public long MaxAttachmentSizeBytes { get; set; } = 25 * 1024 * 1024;  // 25 MB
+    public long MaxMessageSizeBytes { get; set; } = 50 * 1024 * 1024;     // 50 MB
 }
 
 public class SmtpServerHostedService : BackgroundService
@@ -93,7 +95,7 @@ public class SmtpServerHostedService : BackgroundService
     private IMessageStore CreateMessageStore()
     {
         var logger = _serviceProvider.GetRequiredService<ILogger<CustomMessageStore>>();
-        return new CustomMessageStore(_serviceProvider, logger);
+        return new CustomMessageStore(_serviceProvider, logger, _options);
     }
 
     private IUserAuthenticator CreateUserAuthenticator()

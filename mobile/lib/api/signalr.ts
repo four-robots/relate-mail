@@ -89,6 +89,12 @@ export function getConnection(): signalR.HubConnection | null {
   return connection;
 }
 
+// Handler tracking for cleanup
+interface TrackedHandler {
+  event: string;
+  handler: (...args: unknown[]) => void;
+}
+
 /**
  * Hook to manage SignalR connection and email updates
  */
@@ -98,6 +104,7 @@ export function useSignalREmails() {
     state.accounts.find((a) => a.id === state.activeAccountId)
   );
   const connectionRef = useRef<signalR.HubConnection | null>(null);
+  const handlersRef = useRef<TrackedHandler[]>([]);
 
   useEffect(() => {
     if (!activeAccount) {
@@ -113,17 +120,22 @@ export function useSignalREmails() {
       try {
         const conn = await createConnection(activeAccount.serverUrl, apiKey);
 
+        // Track handlers for cleanup to prevent memory leaks
+        const handlers: TrackedHandler[] = [];
+
         // Handle new email event
-        conn.on("NewEmail", (emailId: string) => {
+        const newEmailHandler = (emailId: string) => {
           console.log("New email received:", emailId);
           // Invalidate email queries to refresh the list
           queryClient.invalidateQueries({
             queryKey: ["emails", activeAccount.id],
           });
-        });
+        };
+        conn.on("NewEmail", newEmailHandler);
+        handlers.push({ event: "NewEmail", handler: newEmailHandler });
 
         // Handle email updated event
-        conn.on("EmailUpdated", (emailId: string) => {
+        const emailUpdatedHandler = (emailId: string) => {
           console.log("Email updated:", emailId);
           queryClient.invalidateQueries({
             queryKey: ["email", activeAccount.id, emailId],
@@ -131,15 +143,21 @@ export function useSignalREmails() {
           queryClient.invalidateQueries({
             queryKey: ["emails", activeAccount.id],
           });
-        });
+        };
+        conn.on("EmailUpdated", emailUpdatedHandler);
+        handlers.push({ event: "EmailUpdated", handler: emailUpdatedHandler });
 
         // Handle email deleted event
-        conn.on("EmailDeleted", (emailId: string) => {
+        const emailDeletedHandler = (emailId: string) => {
           console.log("Email deleted:", emailId);
           queryClient.invalidateQueries({
             queryKey: ["emails", activeAccount.id],
           });
-        });
+        };
+        conn.on("EmailDeleted", emailDeletedHandler);
+        handlers.push({ event: "EmailDeleted", handler: emailDeletedHandler });
+
+        handlersRef.current = handlers;
 
         // Handle connection state changes
         conn.onreconnecting((error) => {
@@ -165,8 +183,14 @@ export function useSignalREmails() {
     setupConnection();
 
     return () => {
-      if (connectionRef.current) {
-        connectionRef.current.stop();
+      // Remove all tracked handlers to prevent memory leaks
+      const conn = connectionRef.current;
+      if (conn) {
+        handlersRef.current.forEach(({ event, handler }) => {
+          conn.off(event, handler);
+        });
+        handlersRef.current = [];
+        conn.stop();
         connectionRef.current = null;
       }
     };

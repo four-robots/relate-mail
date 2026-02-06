@@ -49,20 +49,24 @@ export async function disconnect(): Promise<void> {
   }
 }
 
-export function onNewEmail(handler: (emailId: string) => void): void {
+export function onNewEmail(handler: (emailId: string) => void): () => void {
   connection?.on('NewEmail', handler)
+  return () => connection?.off('NewEmail', handler)
 }
 
-export function onEmailUpdated(handler: (emailId: string) => void): void {
+export function onEmailUpdated(handler: (emailId: string) => void): () => void {
   connection?.on('EmailUpdated', handler)
+  return () => connection?.off('EmailUpdated', handler)
 }
 
-export function onEmailDeleted(handler: (emailId: string) => void): void {
+export function onEmailDeleted(handler: (emailId: string) => void): () => void {
   connection?.on('EmailDeleted', handler)
+  return () => connection?.off('EmailDeleted', handler)
 }
 
-export function onUnreadCountChanged(handler: (count: number) => void): void {
+export function onUnreadCountChanged(handler: (count: number) => void): () => void {
   connection?.on('UnreadCountChanged', handler)
+  return () => connection?.off('UnreadCountChanged', handler)
 }
 
 export function onReconnecting(handler: (error?: Error) => void): void {

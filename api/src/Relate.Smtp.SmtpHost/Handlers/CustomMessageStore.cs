@@ -17,11 +17,16 @@ public class CustomMessageStore : MessageStore
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<CustomMessageStore> _logger;
+    private readonly SmtpServerOptions _options;
 
-    public CustomMessageStore(IServiceProvider serviceProvider, ILogger<CustomMessageStore> logger)
+    public CustomMessageStore(
+        IServiceProvider serviceProvider,
+        ILogger<CustomMessageStore> logger,
+        SmtpServerOptions options)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _options = options;
     }
 
     public override async Task<SmtpResponse> SaveAsync(
@@ -43,6 +48,14 @@ public class CustomMessageStore : MessageStore
                 stream.Write(segment.Span);
             }
             stream.Position = 0;
+
+            // Validate message size
+            if (buffer.Length > _options.MaxMessageSizeBytes)
+            {
+                _logger.LogWarning("Message rejected: size {Size} bytes exceeds limit {Limit} bytes",
+                    buffer.Length, _options.MaxMessageSizeBytes);
+                return new SmtpResponse(SmtpReplyCode.SizeLimitExceeded, "Message too large");
+            }
 
             using var parseActivity = TelemetryConfiguration.SmtpActivitySource.StartActivity("smtp.message.parse");
             var message = await MimeMessage.LoadAsync(stream, cancellationToken);
@@ -105,6 +118,15 @@ public class CustomMessageStore : MessageStore
                 {
                     using var attachmentStream = new MemoryStream();
                     await mimePart.Content.DecodeToAsync(attachmentStream, cancellationToken);
+
+                    // Validate attachment size
+                    if (attachmentStream.Length > _options.MaxAttachmentSizeBytes)
+                    {
+                        _logger.LogWarning("Attachment '{FileName}' rejected: size {Size} bytes exceeds limit {Limit} bytes",
+                            mimePart.FileName, attachmentStream.Length, _options.MaxAttachmentSizeBytes);
+                        return new SmtpResponse(SmtpReplyCode.SizeLimitExceeded,
+                            $"Attachment '{mimePart.FileName}' too large");
+                    }
 
                     email.Attachments.Add(new EmailAttachment
                     {

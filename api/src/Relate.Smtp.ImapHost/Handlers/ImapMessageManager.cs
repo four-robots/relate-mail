@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using Relate.Smtp.Core.Entities;
 using Relate.Smtp.Core.Interfaces;
@@ -16,11 +17,16 @@ public class ImapMessageManager
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ImapMessageManager> _logger;
+    private readonly ImapServerOptions _options;
 
-    public ImapMessageManager(IServiceProvider serviceProvider, ILogger<ImapMessageManager> logger)
+    public ImapMessageManager(
+        IServiceProvider serviceProvider,
+        ILogger<ImapMessageManager> logger,
+        IOptions<ImapServerOptions> options)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _options = options.Value;
     }
 
     public async Task<List<ImapMessage>> LoadMessagesAsync(Guid userId, CancellationToken ct)
@@ -29,8 +35,8 @@ public class ImapMessageManager
         var emailRepo = scope.ServiceProvider.GetRequiredService<IEmailRepository>();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Load all emails for user with their recipient read status
-        var emails = await emailRepo.GetByUserIdAsync(userId, 0, int.MaxValue, ct);
+        // Load emails for user with configurable limit
+        var emails = await emailRepo.GetByUserIdAsync(userId, 0, _options.MaxMessagesPerSession, ct);
 
         // Get the recipient records for this user to check read status
         var emailIds = emails.Select(e => e.Id).ToList();
