@@ -7,10 +7,29 @@ export class ApiError extends Error {
   }
 }
 
+function safeStorageAccess<T>(
+  accessor: () => T,
+  fallback: T
+): T {
+  try {
+    return accessor();
+  } catch {
+    return fallback;
+  }
+}
+
 async function getAuthHeader(): Promise<Record<string, string>> {
   // Try sessionStorage first (where OIDC stores tokens), then localStorage as fallback
-  const storageKey = Object.keys(sessionStorage).find(key => key.startsWith('oidc.user:'));
-  const token = storageKey ? sessionStorage.getItem(storageKey) : localStorage.getItem('oidc.user');
+  // Use safe storage access to handle private browsing mode where storage may throw
+  const storageKey = safeStorageAccess(
+    () => Object.keys(sessionStorage).find(key => key.startsWith('oidc.user:')),
+    undefined
+  );
+
+  const token = safeStorageAccess(
+    () => storageKey ? sessionStorage.getItem(storageKey) : localStorage.getItem('oidc.user'),
+    null
+  );
 
   if (token) {
     try {

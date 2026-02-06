@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Relate.Smtp.Api.Models;
 using Relate.Smtp.Api.Services;
 using Relate.Smtp.Core.Entities;
@@ -11,6 +12,7 @@ namespace Relate.Smtp.Api.Controllers;
 [ApiController]
 [Route("api/smtp-credentials")]
 [Authorize]
+[EnableRateLimiting("auth")]
 public class SmtpCredentialsController : ControllerBase
 {
     private readonly ISmtpApiKeyRepository _apiKeyRepository;
