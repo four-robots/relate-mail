@@ -2,7 +2,9 @@
 set -e
 
 # Generate runtime configuration from environment variables
-cat > /usr/share/nginx/html/config.json <<EOF
+# Frontend fetches /config/config.json, so we need to create that path
+mkdir -p /usr/share/nginx/html/config
+cat > /usr/share/nginx/html/config/config.json <<EOF
 {
   "oidcAuthority": "${OIDC_AUTHORITY:-}",
   "oidcClientId": "${OIDC_CLIENT_ID:-}",
@@ -12,7 +14,7 @@ cat > /usr/share/nginx/html/config.json <<EOF
 EOF
 
 echo "✓ Generated runtime configuration:"
-cat /usr/share/nginx/html/config.json
+cat /usr/share/nginx/html/config/config.json
 
 # Start nginx
 exec "$@"
