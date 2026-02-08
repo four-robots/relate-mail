@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -24,7 +25,12 @@ public class PushSubscriptionsController : ControllerBase
         _pushOptions = pushOptions;
     }
 
+    /// <summary>
+    /// Gets the VAPID public key for push notification subscription.
+    /// This endpoint is intentionally public because clients need the key before authentication.
+    /// </summary>
     [HttpGet("vapid-public-key")]
+    [AllowAnonymous]
     public ActionResult<VapidPublicKeyResponse> GetVapidPublicKey()
     {
         var publicKey = _pushOptions.Value.VapidPublicKey;

@@ -20,52 +20,59 @@ export type UnreadCountChangedHandler = (count: number) => void;
 
 class SignalRConnection {
   private connection: signalR.HubConnection | null = null;
-  private isConnecting = false;
+  private connectionPromise: Promise<signalR.HubConnection> | null = null;
 
   async connect(apiUrl: string): Promise<signalR.HubConnection> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
       return this.connection;
     }
 
-    if (this.isConnecting) {
-      // Wait for existing connection attempt
-      while (this.isConnecting) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      return this.connection!;
+    // If already connecting, wait for the existing promise
+    if (this.connectionPromise) {
+      return this.connectionPromise;
     }
 
-    this.isConnecting = true;
+    // Create a new connection promise
+    this.connectionPromise = this.createConnection(apiUrl);
 
     try {
-      const hubUrl = `${apiUrl}/hubs/email`;
-
-      this.connection = new signalR.HubConnectionBuilder()
-        .withUrl(hubUrl, {
-          withCredentials: true,
-        })
-        .withAutomaticReconnect()
-        .build();
-
-      await this.connection.start();
-      console.log('SignalR connected');
-
-      this.connection.onreconnecting(() => {
-        console.log('SignalR reconnecting...');
-      });
-
-      this.connection.onreconnected(() => {
-        console.log('SignalR reconnected');
-      });
-
-      this.connection.onclose((error) => {
-        console.error('SignalR disconnected:', error);
-      });
-
-      return this.connection;
-    } finally {
-      this.isConnecting = false;
+      const connection = await this.connectionPromise;
+      return connection;
+    } catch (error) {
+      // Clear the promise on failure so next attempt can retry
+      this.connectionPromise = null;
+      throw error;
     }
+  }
+
+  private async createConnection(apiUrl: string): Promise<signalR.HubConnection> {
+    const hubUrl = `${apiUrl}/hubs/email`;
+
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, {
+        withCredentials: true,
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    await this.connection.start();
+    console.log('SignalR connected');
+
+    this.connection.onreconnecting(() => {
+      console.log('SignalR reconnecting...');
+    });
+
+    this.connection.onreconnected(() => {
+      console.log('SignalR reconnected');
+    });
+
+    this.connection.onclose((error) => {
+      console.error('SignalR disconnected:', error);
+      // Clear promises on disconnect so reconnection can be attempted
+      this.connectionPromise = null;
+    });
+
+    return this.connection;
   }
 
   onNewEmail(handler: NewEmailHandler): () => void {

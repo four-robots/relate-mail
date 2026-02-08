@@ -27,18 +27,18 @@ public class Pop3CommandHandler
 
     public async Task HandleSessionAsync(Stream stream, CancellationToken ct)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: false);
         // Use UTF8 without BOM - MailKit and other clients don't expect BOM in protocol greetings
-        using var writer = new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true };
+        using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: false) { AutoFlush = true };
 
         var session = new Pop3Session();
         _logger.LogInformation("POP3 session started: {ConnectionId}", session.ConnectionId);
 
-        // Send greeting
-        await writer.WriteLineAsync(Pop3Response.Greeting(_options.ServerName));
-
         try
         {
+            // Send greeting
+            await writer.WriteLineAsync(Pop3Response.Greeting(_options.ServerName));
+
             while (!ct.IsCancellationRequested)
             {
                 // Check for timeout
@@ -76,6 +76,14 @@ public class Pop3CommandHandler
         finally
         {
             _logger.LogInformation("POP3 session ended: {ConnectionId}", session.ConnectionId);
+            try
+            {
+                await writer.FlushAsync(ct);
+            }
+            catch
+            {
+                // Ignore flush errors during cleanup
+            }
         }
     }
 
@@ -261,6 +269,9 @@ public class Pop3CommandHandler
 
         if (session.DeletedMessages.Contains(msgNum))
             return Pop3Response.Error("Message already deleted");
+
+        if (session.IsDeletedMessagesLimitReached)
+            return Pop3Response.Error("Too many messages marked for deletion in this session");
 
         var message = session.Messages.FirstOrDefault(m => m.MessageNumber == msgNum);
         if (message == null)

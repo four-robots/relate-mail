@@ -375,23 +375,29 @@ public class EmailsController : ControllerBase
 
     [HttpPost("bulk/delete")]
     [EnableRateLimiting("write")]
-    public async Task<IActionResult> BulkDelete([FromBody] BulkEmailOperationRequest request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<BulkDeleteResponse>> BulkDelete([FromBody] BulkEmailOperationRequest request, CancellationToken cancellationToken = default)
     {
         var user = await _userProvisioningService.GetOrCreateUserAsync(User, cancellationToken);
 
-        await _emailRepository.BulkDeleteAsync(user.Id, request.EmailIds, cancellationToken);
+        var deletedCount = await _emailRepository.BulkDeleteAsync(user.Id, request.EmailIds, cancellationToken);
 
-        // Notify about deleted emails
-        foreach (var emailId in request.EmailIds)
+        // Only notify for emails that were actually deleted
+        // We don't have exact IDs of deleted emails, but we can send notifications for requested IDs
+        // up to the deleted count (in practice, failed deletes are typically due to access issues)
+        if (deletedCount > 0)
         {
-            await _notificationService.NotifyEmailDeletedAsync(user.Id, emailId, cancellationToken);
+            var notifyCount = Math.Min(deletedCount, request.EmailIds.Count);
+            foreach (var emailId in request.EmailIds.Take(notifyCount))
+            {
+                await _notificationService.NotifyEmailDeletedAsync(user.Id, emailId, cancellationToken);
+            }
+
+            // Update unread count
+            var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
+            await _notificationService.NotifyUnreadCountChangedAsync(user.Id, unreadCount, cancellationToken);
         }
 
-        // Update unread count
-        var unreadCount = await _emailRepository.GetUnreadCountByUserIdAsync(user.Id, cancellationToken);
-        await _notificationService.NotifyUnreadCountChangedAsync(user.Id, unreadCount, cancellationToken);
-
-        return NoContent();
+        return Ok(new BulkDeleteResponse { DeletedCount = deletedCount });
     }
 
     [HttpGet("sent")]

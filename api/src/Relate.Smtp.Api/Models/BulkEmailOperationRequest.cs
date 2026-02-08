@@ -5,3 +5,8 @@ public class BulkEmailOperationRequest
     public List<Guid> EmailIds { get; set; } = new();
     public bool? IsRead { get; set; }
 }
+
+public class BulkDeleteResponse
+{
+    public int DeletedCount { get; set; }
+}

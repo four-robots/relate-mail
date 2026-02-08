@@ -87,37 +87,54 @@ function InboxPage() {
       apiUrl = window.location.origin
     }
 
+    // Track if effect is still mounted to prevent state updates after unmount
+    let isMounted = true
+
     // Store unsubscribe functions to clean up on unmount
     let unsubNewEmail: (() => void) | undefined
     let unsubEmailUpdated: (() => void) | undefined
     let unsubEmailDeleted: (() => void) | undefined
     let unsubUnreadCount: (() => void) | undefined
 
-    signalRConnection.connect(apiUrl).then(() => {
-      // Handle new email notifications
-      unsubNewEmail = signalRConnection.onNewEmail(() => {
-        queryClient.invalidateQueries({ queryKey: ['emails'] })
-      })
+    const setupConnection = async () => {
+      try {
+        await signalRConnection.connect(apiUrl)
 
-      // Handle email updates (read/unread)
-      unsubEmailUpdated = signalRConnection.onEmailUpdated(() => {
-        queryClient.invalidateQueries({ queryKey: ['emails'] })
-      })
+        // Check if still mounted after async operation
+        if (!isMounted) return
 
-      // Handle email deletions
-      unsubEmailDeleted = signalRConnection.onEmailDeleted(() => {
-        queryClient.invalidateQueries({ queryKey: ['emails'] })
-      })
+        // Handle new email notifications
+        unsubNewEmail = signalRConnection.onNewEmail(() => {
+          queryClient.invalidateQueries({ queryKey: ['emails'] })
+        })
 
-      // Handle unread count changes
-      unsubUnreadCount = signalRConnection.onUnreadCountChanged((count) => {
-        setUnreadCount(count)
-      })
-    }).catch((error) => {
-      console.error('Failed to connect to SignalR:', error)
-    })
+        // Handle email updates (read/unread)
+        unsubEmailUpdated = signalRConnection.onEmailUpdated(() => {
+          queryClient.invalidateQueries({ queryKey: ['emails'] })
+        })
+
+        // Handle email deletions
+        unsubEmailDeleted = signalRConnection.onEmailDeleted(() => {
+          queryClient.invalidateQueries({ queryKey: ['emails'] })
+        })
+
+        // Handle unread count changes
+        unsubUnreadCount = signalRConnection.onUnreadCountChanged((count) => {
+          if (isMounted) {
+            setUnreadCount(count)
+          }
+        })
+      } catch (error) {
+        if (isMounted) {
+          console.error('Failed to connect to SignalR:', error)
+        }
+      }
+    }
+
+    setupConnection()
 
     return () => {
+      isMounted = false
       // Unsubscribe handlers but don't disconnect singleton connection
       // The connection persists for app lifetime and handles reconnection
       unsubNewEmail?.()

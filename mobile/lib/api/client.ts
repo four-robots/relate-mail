@@ -40,35 +40,51 @@ function createApiRequest(config: ApiClientConfig) {
     const url = `${config.baseUrl}/api${endpoint}`;
     const method = options.method || "GET";
 
-    console.log(`[API] ${method} ${url}`);
-    console.log(`[API] Auth: ${config.jwtToken ? "JWT" : config.apiKey ? "ApiKey" : "none"}, length: ${(config.jwtToken || config.apiKey)?.length || 0}`);
-    if (options.body) {
-      console.log("[API] Request body:", options.body);
+    if (__DEV__) {
+      console.log(`[API] ${method} ${url}`);
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...headers,
-        ...(options.headers as Record<string, string>),
-      },
-    });
+    // Create AbortController with 30-second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    console.log(`[API] Response: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          ...headers,
+          ...(options.headers as Record<string, string>),
+        },
+      });
 
-    if (!response.ok) {
-      const message = await response.text();
-      console.error(`[API] Error response body:`, message);
-      throw new ApiError(response.status, message || response.statusText);
+      clearTimeout(timeoutId);
+
+      if (__DEV__) {
+        console.log(`[API] Response: ${response.status} ${response.statusText}`);
+      }
+
+      if (!response.ok) {
+        const message = await response.text();
+        if (__DEV__) {
+          console.error(`[API] Error response body:`, message);
+        }
+        throw new ApiError(response.status, message || response.statusText);
+      }
+
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
+      const json = await response.json();
+      return json;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new ApiError(0, "Request timed out");
+      }
+      throw error;
     }
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    const json = await response.json();
-    console.log("[API] Response body:", JSON.stringify(json).slice(0, 200));
-    return json;
   };
 }
 
@@ -112,15 +128,11 @@ export async function getActiveApiClient() {
     (a) => a.id === state.activeAccountId
   );
 
-  console.log("[API] getActiveApiClient - activeAccountId:", state.activeAccountId);
-  console.log("[API] getActiveApiClient - found account:", !!activeAccount);
-
   if (!activeAccount) {
     throw new Error("No active account");
   }
 
   const apiKey = await getApiKey(activeAccount.id);
-  console.log("[API] getActiveApiClient - got API key:", !!apiKey, "length:", apiKey?.length || 0);
 
   if (!apiKey) {
     throw new Error("API key not found for account");
