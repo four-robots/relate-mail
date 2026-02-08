@@ -304,7 +304,8 @@ function SmtpSettingsPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        if (confirm(`Revoke API key "${key.name}"? Email clients using this key will stop working.`)) {
+                        // eslint-disable-next-line no-alert -- TODO: replace with confirmation dialog component
+                        if (window.confirm(`Revoke API key "${key.name}"? Email clients using this key will stop working.`)) {
                           revokeKey.mutate(key.id)
                         }
                       }}
