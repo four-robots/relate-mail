@@ -16,6 +16,12 @@ RUN npm ci && npm run build:web
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Copy Node.js from node-build stage (safer than curl|bash installation)
+COPY --from=node-build /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-build /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
 # Copy csproj files and restore
 COPY api/src/Relate.Smtp.Core/Relate.Smtp.Core.csproj api/src/Relate.Smtp.Core/
 COPY api/src/Relate.Smtp.Infrastructure/Relate.Smtp.Infrastructure.csproj api/src/Relate.Smtp.Infrastructure/
@@ -31,10 +37,12 @@ RUN dotnet restore api/src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj
 # Copy backend sources
 COPY api api/
 
-# Copy web build output from node-build stage
-COPY --from=node-build /src/web/dist /src/web/dist
+# Copy pre-built web folder from node-build stage (includes dist and package.json)
+COPY --from=node-build /src/web /src/web
+COPY --from=node-build /src/packages /src/packages
+COPY --from=node-build /src/package.json /src/package.json
 
-# Build backend (API publish will copy web/dist to wwwroot)
+# Build backend (API publish will detect existing web/dist and skip npm build)
 WORKDIR /src/api
 RUN dotnet publish src/Relate.Smtp.Api/Relate.Smtp.Api.csproj -c Release -o /app/api
 RUN dotnet publish src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj -c Release -o /app/smtp
