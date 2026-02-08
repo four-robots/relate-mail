@@ -12,8 +12,10 @@ const redirectUri = AuthSession.makeRedirectUri({
   path: "auth/callback",
 });
 
-// Debug: log the redirect URI at module load
-console.log("[OIDC] Redirect URI:", redirectUri);
+// Debug: log the redirect URI at module load (dev only)
+if (__DEV__) {
+  console.log("[OIDC] Redirect URI:", redirectUri);
+}
 
 export interface OidcResult {
   accessToken: string;
@@ -100,12 +102,13 @@ export async function discoverServer(
 export async function performOidcAuth(
   oidcConfig: OidcConfig
 ): Promise<OidcResult> {
-  console.log("[OIDC] Starting auth with config:", {
-    authority: oidcConfig.authority,
-    clientId: oidcConfig.clientId,
-    scopes: oidcConfig.scopes,
-    redirectUri,
-  });
+  if (__DEV__) {
+    console.log("[OIDC] Starting auth with config:", {
+      authority: oidcConfig.authority,
+      clientId: oidcConfig.clientId,
+      scopes: oidcConfig.scopes,
+    });
+  }
 
   // Validate required config
   if (!oidcConfig.authority) {
@@ -116,9 +119,7 @@ export async function performOidcAuth(
   }
 
   // Discover OIDC endpoints
-  console.log("[OIDC] Fetching discovery from:", oidcConfig.authority);
   const discovery = await AuthSession.fetchDiscoveryAsync(oidcConfig.authority);
-  console.log("[OIDC] Discovery result:", discovery);
 
   // Create auth request with PKCE (AuthSession handles verifier/challenge internally)
   const authRequest = new AuthSession.AuthRequest({

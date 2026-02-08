@@ -2,6 +2,12 @@ namespace Relate.Smtp.Pop3Host.Protocol;
 
 public class Pop3Session
 {
+    /// <summary>
+    /// Maximum number of messages that can be marked for deletion in a single session.
+    /// Prevents unbounded memory growth in long-running sessions.
+    /// </summary>
+    public const int MaxDeletedMessages = 10000;
+
     public string ConnectionId { get; init; } = Guid.NewGuid().ToString();
     public DateTime ConnectedAt { get; init; } = DateTime.UtcNow;
     public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
@@ -15,6 +21,11 @@ public class Pop3Session
 
     public bool IsTimedOut(TimeSpan timeout) =>
         DateTime.UtcNow - LastActivityAt > timeout;
+
+    /// <summary>
+    /// Returns true if the deleted messages collection has reached its maximum size.
+    /// </summary>
+    public bool IsDeletedMessagesLimitReached => DeletedMessages.Count >= MaxDeletedMessages;
 }
 
 public class Pop3Message

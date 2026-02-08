@@ -11,15 +11,18 @@ public class EmailFilterService
 {
     private readonly IEmailFilterRepository _filterRepository;
     private readonly IEmailLabelRepository _emailLabelRepository;
+    private readonly IEmailRepository _emailRepository;
     private readonly ILogger<EmailFilterService> _logger;
 
     public EmailFilterService(
         IEmailFilterRepository filterRepository,
         IEmailLabelRepository emailLabelRepository,
+        IEmailRepository emailRepository,
         ILogger<EmailFilterService> logger)
     {
         _filterRepository = filterRepository;
         _emailLabelRepository = emailLabelRepository;
+        _emailRepository = emailRepository;
         _logger = logger;
     }
 
@@ -132,12 +135,10 @@ public class EmailFilterService
         }
 
         // Action: Delete
-        // Note: We don't actually delete here, just mark for deletion
-        // The actual deletion would be handled by the calling code if needed
         if (filter.Delete)
         {
-            _logger.LogInformation("Filter '{FilterName}' marked email {EmailId} for deletion", filter.Name, email.Id);
-            // In a real implementation, you might set a flag or call a delete method
+            _logger.LogInformation("Filter '{FilterName}' deleting email {EmailId}", filter.Name, email.Id);
+            await _emailRepository.DeleteAsync(email.Id, cancellationToken);
         }
     }
 }

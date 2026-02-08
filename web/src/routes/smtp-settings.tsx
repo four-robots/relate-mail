@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useAuth } from 'react-oidc-context'
 import { getConfig } from '@/config'
@@ -34,6 +34,16 @@ function SmtpSettingsPage() {
   const [selectedScopes, setSelectedScopes] = useState<string[]>(['smtp', 'pop3', 'imap', 'api:read', 'api:write'])
   const [createdKey, setCreatedKey] = useState<{ apiKey: string; name: string; scopes: string[] } | null>(null)
   const [copiedKey, setCopiedKey] = useState(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const scopeOptions = [
     { value: 'smtp', label: 'SMTP', description: 'Send emails via SMTP server' },
@@ -60,7 +70,11 @@ function SmtpSettingsPage() {
     if (createdKey) {
       await navigator.clipboard.writeText(createdKey.apiKey)
       setCopiedKey(true)
-      setTimeout(() => setCopiedKey(false), 2000)
+      // Clear any existing timeout
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+      copyTimeoutRef.current = setTimeout(() => setCopiedKey(false), 2000)
     }
   }
 

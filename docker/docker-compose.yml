@@ -65,11 +65,12 @@ services:
       - relate-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/587' || exit 1"]
+      # Verify SMTP server responds with 220 greeting
+      test: ["CMD-SHELL", "echo 'QUIT' | nc -w 5 localhost 587 | grep -q '^220' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,11 +95,12 @@ services:
       - relate-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/110' || exit 1"]
+      # Verify POP3 server responds with +OK greeting
+      test: ["CMD-SHELL", "echo 'QUIT' | nc -w 5 localhost 110 | grep -q '^+OK' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy
@@ -123,11 +125,12 @@ services:
       - relate-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "timeout 5 bash -c '</dev/tcp/localhost/143' || exit 1"]
+      # Verify IMAP server responds with * OK greeting
+      test: ["CMD-SHELL", "echo 'a001 LOGOUT' | nc -w 5 localhost 143 | grep -q '^\\* OK' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     depends_on:
       postgres:
         condition: service_healthy

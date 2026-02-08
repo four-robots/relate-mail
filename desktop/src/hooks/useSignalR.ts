@@ -17,6 +17,7 @@ import {
 export function useSignalR(serverUrl: string | null, apiKey: string | null) {
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
+  const [connectionError, setConnectionError] = useState<Error | null>(null)
   const setupDoneRef = useRef(false)
   const unsubscribersRef = useRef<(() => void)[]>([])
 
@@ -78,6 +79,9 @@ export function useSignalR(serverUrl: string | null, apiKey: string | null) {
       } catch (error) {
         console.error('SignalR connection failed:', error)
         setIsConnected(false)
+        if (!isCancelled) {
+          setConnectionError(error instanceof Error ? error : new Error(String(error)))
+        }
       }
     }
 
@@ -96,7 +100,7 @@ export function useSignalR(serverUrl: string | null, apiKey: string | null) {
     }
   }, [serverUrl, apiKey, queryClient])
 
-  return { isConnected }
+  return { isConnected, connectionError }
 }
 
 async function notifyNewEmails() {

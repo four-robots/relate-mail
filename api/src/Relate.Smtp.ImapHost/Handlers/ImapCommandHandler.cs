@@ -27,18 +27,18 @@ public class ImapCommandHandler
 
     public async Task HandleSessionAsync(Stream stream, CancellationToken ct)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: true);
+        using var reader = new StreamReader(stream, Encoding.UTF8, leaveOpen: false);
         // Use UTF8 without BOM - MailKit and other clients don't expect BOM in protocol greetings
-        using var writer = new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true };
+        using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: false) { AutoFlush = true };
 
         var session = new ImapSession();
         _logger.LogInformation("IMAP session started: {ConnectionId}", session.ConnectionId);
 
-        // Send greeting
-        await writer.WriteLineAsync(ImapResponse.Greeting(_options.ServerName));
-
         try
         {
+            // Send greeting
+            await writer.WriteLineAsync(ImapResponse.Greeting(_options.ServerName));
+
             while (!ct.IsCancellationRequested && session.State != ImapState.Logout)
             {
                 // Check for timeout
@@ -73,6 +73,14 @@ public class ImapCommandHandler
         finally
         {
             _logger.LogInformation("IMAP session ended: {ConnectionId}", session.ConnectionId);
+            try
+            {
+                await writer.FlushAsync(ct);
+            }
+            catch
+            {
+                // Ignore flush errors during cleanup
+            }
         }
     }
 
@@ -587,6 +595,12 @@ public class ImapCommandHandler
             // Track deletions
             if (msg.Flags.HasFlag(ImapFlags.Deleted))
             {
+                // Check limit before adding
+                if (!session.DeletedUids.Contains(msg.Uid) && session.IsDeletedUidsLimitReached)
+                {
+                    await writer.WriteLineAsync(ImapResponse.TaggedNo(command.Tag, "Too many messages marked for deletion in this session"));
+                    return;
+                }
                 session.DeletedUids.Add(msg.Uid);
             }
             else
