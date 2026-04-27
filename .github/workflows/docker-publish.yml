@@ -47,6 +47,10 @@ jobs:
             context: .
             dockerfile: ./api/Dockerfile
             target: imap
+          - name: web
+            context: .
+            dockerfile: ./api/Dockerfile
+            target: web
 
     steps:
       - name: Checkout repository
@@ -125,3 +129,4 @@ jobs:
           echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-smtp" >> $GITHUB_STEP_SUMMARY
           echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-pop3" >> $GITHUB_STEP_SUMMARY
           echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-imap" >> $GITHUB_STEP_SUMMARY
+          echo "- ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web" >> $GITHUB_STEP_SUMMARY

@@ -159,17 +159,14 @@ direct MX delivery — fine for testing, generally not for production.
 
 ## Web SPA
 
-The `web` component is **disabled by default** because the project does
-not yet publish a `relate-mail-web` image. Once it does, enable it as a
-separate pod so it can roll independently of the API/protocol hosts:
+The `web` component is **disabled by default** but the image
+(`ghcr.io/four-robots/relate-mail-web`) is published from the same release
+pipeline as api/smtp/pop3/imap. Enable it as a separate pod so it can roll
+independently:
 
 ```yaml
 web:
   enabled: true
-  image:
-    # falls back to ghcr.io/four-robots/relate-mail-web:<chart appVersion>
-    tag: "1.2.3"
-  apiUrl: /api
   oidc:
     clientId: relate-mail-web
     redirectUri: https://relate.example.com
@@ -183,17 +180,23 @@ web:
             pathType: Prefix
 ```
 
-`OIDC_AUTHORITY` is shared with the API via the top-level `oidc.authority`.
-`API_URL`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URI`, and `OIDC_SCOPE` are passed
-as env vars; the image is expected to render them into `config.json` at
-container startup (see `docker/.env.example` in the project).
+How config flows:
 
-If you want the SPA at `/` and the API at `/api` on the same host, point
-`web.ingress` at the user-facing host and add a path-based rule that
-forwards `/api` to the API Service — most ingress controllers handle this
-with a single Ingress resource (use `nginx.ingress.kubernetes.io/rewrite-target`
-or your controller's equivalent), or split it across two Ingress resources
-on the same host.
+- `OIDC_AUTHORITY`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URI`, `OIDC_SCOPE` and
+  `API_URL` are passed as env vars; the image's startup hook renders them
+  into `/usr/share/nginx/html/config/config.json` before nginx launches.
+  `OIDC_AUTHORITY` defaults to the chart-wide `oidc.authority`.
+- The image's embedded nginx reverse-proxies `/api` to whatever
+  `API_BACKEND` points at. The chart automatically sets that to the
+  in-cluster api Service URL, so a single ingress fronting the web pod
+  serves the SPA at `/` and forwards `/api` to the API without needing a
+  second ingress rule. Override with `web.apiBackend` if you want to point
+  at a different API.
+
+If you'd rather route `/api` to the API service via your ingress controller
+instead of through the SPA pod, set `web.apiUrl: /api` and add an Ingress
+rule that backends `/api` at the api Service (path-based fan-out with
+`nginx.ingress.kubernetes.io/rewrite-target` or your controller's equivalent).
 
 ## Ingress
 
