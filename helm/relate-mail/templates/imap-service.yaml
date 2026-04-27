@@ -1,0 +1,31 @@
+{{- if .Values.imap.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "imap") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "imap") | nindent 4 }}
+  {{- with .Values.imap.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.imap.service.type }}
+  {{- if and (eq .Values.imap.service.type "LoadBalancer") .Values.imap.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.imap.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.imap.service.type "LoadBalancer") .Values.imap.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.imap.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    {{- include "relate-mail.componentSelectorLabels" (list . "imap") | nindent 4 }}
+  ports:
+    - name: imap
+      port: {{ .Values.imap.port }}
+      targetPort: imap
+      protocol: TCP
+    - name: imaps
+      port: {{ .Values.imap.securePort }}
+      targetPort: imaps
+      protocol: TCP
+{{- end }}

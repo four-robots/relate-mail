@@ -1,0 +1,291 @@
+# Default values for relate-mail.
+# Override with --set or a custom values.yaml.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Image settings shared by all four service images (api, smtp, pop3, imap).
+# Each component below can override `image.repository` and `image.tag`.
+image:
+  registry: ghcr.io
+  repository: four-robots/relate-mail
+  tag: ""              # defaults to .Chart.AppVersion when empty
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+# - name: ghcr-creds
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop: ["ALL"]
+
+# Database connection.
+# If postgresql.enabled=true, this chart deploys a single-node PostgreSQL
+# and constructs the connection string from postgresql.* values.
+# Otherwise, set database.existingSecret OR database.connectionString
+# (or the host/user/password fields below) to point at an external DB.
+database:
+  # Plaintext connection string. Used only when set and no existingSecret is provided.
+  connectionString: ""
+  # Reference an existing Secret with key `connectionString`.
+  existingSecret: ""
+  existingSecretKey: connectionString
+  # Used to build a connection string when both connectionString and existingSecret are empty.
+  host: ""
+  port: 5432
+  database: relate_mail
+  username: postgres
+  password: ""
+
+# In-chart PostgreSQL (single replica, suitable for dev / small deployments).
+# For production, prefer an external managed Postgres and set this to false.
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  auth:
+    username: postgres
+    password: ""               # required when postgresql.enabled=true and existingSecret is empty
+    database: relate_mail
+    existingSecret: ""         # Secret with key `password`
+    existingSecretKey: password
+  service:
+    port: 5432
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 10Gi
+    accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# OIDC (optional). Leave authority empty to run the API in unauthenticated dev mode.
+oidc:
+  authority: ""
+  audience: ""
+
+# Internal API key used by the SMTP host to call the API's internal endpoints.
+# Provide it inline OR via an existing Secret with key `internalApiKey`.
+internal:
+  apiKey: ""
+  existingSecret: ""
+  existingSecretKey: internalApiKey
+
+# CORS for the API (comma-separated origins).
+cors:
+  allowedOrigins: ""
+
+# Outbound mail delivery.
+# The DeliveryQueueProcessor runs in every host that calls AddInfrastructure
+# (api, smtp, pop3, imap) — so these settings are pushed to all four
+# deployments via a shared ConfigMap. Set `enabled: true` to actually
+# dispatch queued mail; leave it false to keep mail queued.
+#
+# When `relayHost` is set, mail is relayed through that smarthost (Resend,
+# SES, SendGrid, Mailgun, an internal Postfix relay, etc.). When empty,
+# the SMTP daemon attempts direct-to-MX delivery, which is unlikely to be
+# accepted from most cluster egress IPs.
+outbound:
+  enabled: false
+  relayHost: ""
+  relayPort: 587
+  relayUseTls: true
+  relayUsername: ""
+  # Provide the relay password inline OR via an existing Secret with key `relayPassword`.
+  relayPassword: ""
+  existingSecret: ""
+  existingSecretKey: relayPassword
+  # The MAIL FROM domain announced to the relay (also used in HELO/EHLO).
+  senderDomain: ""
+  maxConcurrency: 5
+  maxRetries: 10
+  retryBaseDelaySeconds: 60
+  queuePollingIntervalSeconds: 15
+  smtpTimeoutSeconds: 30
+
+# REST API workload.
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-api
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env: []                      # extra env vars: [{name: FOO, value: bar}, ...]
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: relate-mail.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+    # - secretName: relate-mail-tls
+    #   hosts:
+    #     - relate-mail.local
+
+# SMTP submission + (optional) MX workload.
+smtp:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-smtp
+    tag: ""
+  serverName: smtp.example.com
+  requireAuthentication: true
+  submissionPort: 587
+  implicitTlsPort: 465
+  healthPort: 8081
+  mx:
+    enabled: false
+    port: 25
+    hostedDomains: []          # e.g. ["example.com"]
+    validateRecipients: true
+  service:
+    type: LoadBalancer
+    annotations: {}
+    externalTrafficPolicy: Local
+    loadBalancerIP: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env: []
+
+pop3:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-pop3
+    tag: ""
+  serverName: pop3.example.com
+  requireAuthentication: true
+  port: 110
+  securePort: 995
+  healthPort: 8082
+  service:
+    type: LoadBalancer
+    annotations: {}
+    externalTrafficPolicy: Local
+    loadBalancerIP: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env: []
+
+imap:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-imap
+    tag: ""
+  serverName: imap.example.com
+  requireAuthentication: true
+  port: 143
+  securePort: 993
+  healthPort: 8083
+  service:
+    type: LoadBalancer
+    annotations: {}
+    externalTrafficPolicy: Local
+    loadBalancerIP: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env: []
+
+# Web SPA frontend.
+# Disabled by default — the project does not yet publish a `relate-mail-web`
+# image. Once it does, set `web.enabled=true` (and override the image if
+# the published name differs from the convention below).
+#
+# Runtime config (apiUrl, OIDC client) is passed as env vars; the image is
+# expected to render `config.json` from these at container startup. See
+# docker/.env.example in the project for the naming convention.
+web:
+  enabled: false
+  replicaCount: 1
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-web
+    tag: ""
+  service:
+    type: ClusterIP
+    port: 8080
+  containerPort: 8080
+  # Path the SPA uses to reach the API. Relative paths assume the same
+  # ingress also routes that prefix to the api Service.
+  apiUrl: /api
+  oidc:
+    clientId: ""
+    redirectUri: ""
+    scope: "openid profile email"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  # HTTP path used for liveness/readiness probes. Empty disables probes.
+  healthPath: /
+  env: []
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: relate-mail.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+    # - secretName: relate-mail-web-tls
+    #   hosts:
+    #     - relate-mail.local
+
+# Scheduling
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,133 @@
+{{- if .Values.smtp.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "smtp") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "smtp") | nindent 4 }}
+spec:
+  replicas: {{ .Values.smtp.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "relate-mail.componentSelectorLabels" (list . "smtp") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "relate-mail.componentSelectorLabels" (list . "smtp") | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "relate-mail.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: smtp
+          image: {{ include "relate-mail.image" (dict "top" . "component" "smtp" "config" .Values.smtp) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: submission
+              containerPort: {{ .Values.smtp.submissionPort }}
+              protocol: TCP
+            - name: implicit-tls
+              containerPort: {{ .Values.smtp.implicitTlsPort }}
+              protocol: TCP
+            {{- if .Values.smtp.mx.enabled }}
+            - name: mx
+              containerPort: {{ .Values.smtp.mx.port }}
+              protocol: TCP
+            {{- end }}
+            - name: health
+              containerPort: {{ .Values.smtp.healthPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "relate-mail.outboundConfigName" . }}
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.dbSecretName" . }}
+                  key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Smtp__ServerName
+              value: {{ .Values.smtp.serverName | quote }}
+            - name: Smtp__Port
+              value: {{ .Values.smtp.submissionPort | quote }}
+            - name: Smtp__SecurePort
+              value: {{ .Values.smtp.implicitTlsPort | quote }}
+            - name: Smtp__RequireAuthentication
+              value: {{ .Values.smtp.requireAuthentication | quote }}
+            - name: Smtp__Mx__Enabled
+              value: {{ .Values.smtp.mx.enabled | quote }}
+            {{- if .Values.smtp.mx.enabled }}
+            - name: Smtp__Mx__Port
+              value: {{ .Values.smtp.mx.port | quote }}
+            - name: Smtp__Mx__ValidateRecipients
+              value: {{ .Values.smtp.mx.validateRecipients | quote }}
+            {{- range $i, $domain := .Values.smtp.mx.hostedDomains }}
+            - name: {{ printf "Smtp__Mx__HostedDomains__%d" $i | quote }}
+              value: {{ $domain | quote }}
+            {{- end }}
+            {{- end }}
+            - name: Api__BaseUrl
+              value: {{ printf "http://%s:%d" (include "relate-mail.componentFullname" (list . "api")) (int .Values.api.service.port) | quote }}
+            {{- if or .Values.internal.apiKey .Values.internal.existingSecret }}
+            - name: Internal__ApiKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.internalSecretName" . }}
+                  key: {{ include "relate-mail.internalSecretKey" . }}
+            {{- end }}
+            - name: HealthCheck__Url
+              value: {{ printf "http://+:%d" (int .Values.smtp.healthPort) | quote }}
+            {{- if eq (include "relate-mail.outboundHasPassword" .) "true" }}
+            - name: OutboundMail__RelayPassword
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.outboundSecretName" . }}
+                  key: {{ include "relate-mail.outboundSecretKey" . }}
+            {{- end }}
+            {{- with .Values.smtp.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.smtp.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
