@@ -237,13 +237,12 @@ imap:
   env: []
 
 # Web SPA frontend.
-# Disabled by default — the project does not yet publish a `relate-mail-web`
-# image. Once it does, set `web.enabled=true` (and override the image if
-# the published name differs from the convention below).
+# nginx-served React/Vite bundle. Set `web.enabled=true` to deploy.
 #
-# Runtime config (apiUrl, OIDC client) is passed as env vars; the image is
-# expected to render `config.json` from these at container startup. See
-# docker/.env.example in the project for the naming convention.
+# Runtime config (oidc, apiUrl) is rendered into config.json at container
+# startup. The /api path inside the SPA's nginx is reverse-proxied to the
+# in-cluster API service via ${API_BACKEND}; that env var is auto-set to the
+# chart's api Service unless `apiBackend` overrides it below.
 web:
   enabled: false
   replicaCount: 1
@@ -254,9 +253,14 @@ web:
     type: ClusterIP
     port: 8080
   containerPort: 8080
-  # Path the SPA uses to reach the API. Relative paths assume the same
-  # ingress also routes that prefix to the api Service.
+  # SPA's runtime API URL (baked into config.json, used by the JS client).
+  # Relative path means same-origin — works when web's ingress also routes
+  # /api to the API service (via the embedded nginx proxy_pass below).
   apiUrl: /api
+  # Override the upstream that the SPA's embedded nginx /api proxy points at.
+  # Defaults to the in-cluster api Service URL. Set to e.g. http://api-other:8080
+  # only if you are intentionally fronting a different API.
+  apiBackend: ""
   oidc:
     clientId: ""
     redirectUri: ""
@@ -268,8 +272,9 @@ web:
     limits:
       cpu: 500m
       memory: 256Mi
-  # HTTP path used for liveness/readiness probes. Empty disables probes.
-  healthPath: /
+  # HTTP path used for startup/liveness/readiness probes. Empty disables probes.
+  # The image's nginx.conf serves a 200 "ok" at /healthz.
+  healthPath: /healthz
   env: []
   ingress:
     enabled: false

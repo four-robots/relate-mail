@@ -119,3 +119,35 @@ LABEL org.opencontainers.image.source="https://github.com/four-robots/relate-mai
 EXPOSE 143 993 8083
 ENV HealthCheck__Url=http://+:8083
 ENTRYPOINT ["dotnet", "Relate.Smtp.ImapHost.dll"]
+
+# Web (SPA) runtime image — separate from the API image so it can roll independently.
+# nginxinc/nginx-unprivileged runs as UID 101 and listens on 8080 by default, so no
+# privileged-port handling is needed in k8s/k3s.
+FROM nginxinc/nginx-unprivileged:1.27-alpine@sha256:65e3e85dbaed8ba248841d9d58a899b6197106c23cb0ff1a132b7bfe0547e4c0 AS web
+
+# Templates listed under /etc/nginx/templates/*.template are envsubst'd into
+# /etc/nginx/conf.d/ on container start by the base image. We use that to inject
+# ${API_BACKEND} into the proxy_pass directive.
+COPY web/nginx.conf /etc/nginx/templates/default.conf.template
+
+# Hooks under /docker-entrypoint.d/ are executed before nginx starts.
+COPY web/docker-entrypoint.sh /docker-entrypoint.d/30-generate-config-json.sh
+
+# Static assets
+COPY --from=node-build /src/web/dist /usr/share/nginx/html
+
+# Defaults; override in k8s. API_BACKEND points the /api proxy at the in-cluster
+# API service. The OIDC_* vars are baked into config.json by the entrypoint hook.
+ENV API_BACKEND=http://api:8080 \
+    OIDC_AUTHORITY="" \
+    OIDC_CLIENT_ID="" \
+    OIDC_REDIRECT_URI="" \
+    OIDC_SCOPE="openid profile email"
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate Mail Web"
+LABEL org.opencontainers.image.description="React + Vite SPA frontend for Relate Mail, served by nginx"
+LABEL org.opencontainers.image.vendor="Relate Mail"
+LABEL org.opencontainers.image.source="https://github.com/four-robots/relate-mail"
+
+EXPOSE 8080

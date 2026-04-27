@@ -450,6 +450,8 @@ jobs:
             target: pop3
           - name: imap
             target: imap
+          - name: web
+            target: web
 
     steps:
       - name: Checkout repository
