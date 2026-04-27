@@ -38,10 +38,7 @@ public static class TelemetryConfiguration
                     .AddSource(Pop3ActivitySource.Name)
                     .AddSource(ImapActivitySource.Name)
                     .AddSource(ApiActivitySource.Name)
-                    .AddEntityFrameworkCoreInstrumentation(options =>
-                    {
-                        options.SetDbStatementForText = true;
-                    });
+                    .AddEntityFrameworkCoreInstrumentation();
 
                 // Allow the caller to add additional instrumentation (e.g., ASP.NET Core, HTTP client)
                 configureTracing?.Invoke(tracing);
