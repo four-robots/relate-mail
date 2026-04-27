@@ -74,12 +74,12 @@ public class SmtpDeliveryService
             client.Timeout = opts.SmtpTimeoutSeconds * 1000;
 
             var secureSocketOptions = opts.RelayUseTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
-            await client.ConnectAsync(opts.RelayHost, opts.RelayPort, secureSocketOptions, cancellationToken)
+            await client.ConnectAsync(opts.RelayHost!, opts.RelayPort, secureSocketOptions, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(opts.RelayUsername))
             {
-                await client.AuthenticateAsync(opts.RelayUsername, opts.RelayPassword, cancellationToken)
+                await client.AuthenticateAsync(opts.RelayUsername, opts.RelayPassword ?? string.Empty, cancellationToken)
                     .ConfigureAwait(false);
             }
 
