@@ -1,0 +1,37 @@
+{{- if .Values.smtp.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "smtp") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "smtp") | nindent 4 }}
+  {{- with .Values.smtp.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.smtp.service.type }}
+  {{- if and (eq .Values.smtp.service.type "LoadBalancer") .Values.smtp.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.smtp.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.smtp.service.type "LoadBalancer") .Values.smtp.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.smtp.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    {{- include "relate-mail.componentSelectorLabels" (list . "smtp") | nindent 4 }}
+  ports:
+    - name: submission
+      port: {{ .Values.smtp.submissionPort }}
+      targetPort: submission
+      protocol: TCP
+    - name: implicit-tls
+      port: {{ .Values.smtp.implicitTlsPort }}
+      targetPort: implicit-tls
+      protocol: TCP
+    {{- if .Values.smtp.mx.enabled }}
+    - name: mx
+      port: {{ .Values.smtp.mx.port }}
+      targetPort: mx
+      protocol: TCP
+    {{- end }}
+{{- end }}

@@ -1,0 +1,107 @@
+{{- if .Values.pop3.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "pop3") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "pop3") | nindent 4 }}
+spec:
+  replicas: {{ .Values.pop3.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "relate-mail.componentSelectorLabels" (list . "pop3") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "relate-mail.componentSelectorLabels" (list . "pop3") | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "relate-mail.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: pop3
+          image: {{ include "relate-mail.image" (dict "top" . "component" "pop3" "config" .Values.pop3) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: pop3
+              containerPort: {{ .Values.pop3.port }}
+              protocol: TCP
+            - name: pop3s
+              containerPort: {{ .Values.pop3.securePort }}
+              protocol: TCP
+            - name: health
+              containerPort: {{ .Values.pop3.healthPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "relate-mail.outboundConfigName" . }}
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.dbSecretName" . }}
+                  key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Pop3__ServerName
+              value: {{ .Values.pop3.serverName | quote }}
+            - name: Pop3__Port
+              value: {{ .Values.pop3.port | quote }}
+            - name: Pop3__SecurePort
+              value: {{ .Values.pop3.securePort | quote }}
+            - name: Pop3__RequireAuthentication
+              value: {{ .Values.pop3.requireAuthentication | quote }}
+            - name: HealthCheck__Url
+              value: {{ printf "http://+:%d" (int .Values.pop3.healthPort) | quote }}
+            {{- if eq (include "relate-mail.outboundHasPassword" .) "true" }}
+            - name: OutboundMail__RelayPassword
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.outboundSecretName" . }}
+                  key: {{ include "relate-mail.outboundSecretKey" . }}
+            {{- end }}
+            {{- with .Values.pop3.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.pop3.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,0 +1,107 @@
+{{- if .Values.imap.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "imap") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "imap") | nindent 4 }}
+spec:
+  replicas: {{ .Values.imap.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "relate-mail.componentSelectorLabels" (list . "imap") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "relate-mail.componentSelectorLabels" (list . "imap") | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "relate-mail.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: imap
+          image: {{ include "relate-mail.image" (dict "top" . "component" "imap" "config" .Values.imap) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          ports:
+            - name: imap
+              containerPort: {{ .Values.imap.port }}
+              protocol: TCP
+            - name: imaps
+              containerPort: {{ .Values.imap.securePort }}
+              protocol: TCP
+            - name: health
+              containerPort: {{ .Values.imap.healthPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "relate-mail.outboundConfigName" . }}
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.dbSecretName" . }}
+                  key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Imap__ServerName
+              value: {{ .Values.imap.serverName | quote }}
+            - name: Imap__Port
+              value: {{ .Values.imap.port | quote }}
+            - name: Imap__SecurePort
+              value: {{ .Values.imap.securePort | quote }}
+            - name: Imap__RequireAuthentication
+              value: {{ .Values.imap.requireAuthentication | quote }}
+            - name: HealthCheck__Url
+              value: {{ printf "http://+:%d" (int .Values.imap.healthPort) | quote }}
+            {{- if eq (include "relate-mail.outboundHasPassword" .) "true" }}
+            - name: OutboundMail__RelayPassword
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.outboundSecretName" . }}
+                  key: {{ include "relate-mail.outboundSecretKey" . }}
+            {{- end }}
+            {{- with .Values.imap.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.imap.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

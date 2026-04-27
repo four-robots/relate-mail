@@ -1,0 +1,59 @@
+Relate Mail has been deployed as release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+Components enabled:
+{{- if .Values.api.enabled }}
+  - API       (Service: {{ include "relate-mail.componentFullname" (list . "api") }}:{{ .Values.api.service.port }})
+{{- end }}
+{{- if .Values.smtp.enabled }}
+  - SMTP      (Service: {{ include "relate-mail.componentFullname" (list . "smtp") }} — submission {{ .Values.smtp.submissionPort }}, implicit-tls {{ .Values.smtp.implicitTlsPort }}{{ if .Values.smtp.mx.enabled }}, mx {{ .Values.smtp.mx.port }}{{ end }})
+{{- end }}
+{{- if .Values.pop3.enabled }}
+  - POP3      (Service: {{ include "relate-mail.componentFullname" (list . "pop3") }} — pop3 {{ .Values.pop3.port }}, pop3s {{ .Values.pop3.securePort }})
+{{- end }}
+{{- if .Values.imap.enabled }}
+  - IMAP      (Service: {{ include "relate-mail.componentFullname" (list . "imap") }} — imap {{ .Values.imap.port }}, imaps {{ .Values.imap.securePort }})
+{{- end }}
+{{- if .Values.web.enabled }}
+  - Web SPA   (Service: {{ include "relate-mail.componentFullname" (list . "web") }}:{{ .Values.web.service.port }})
+{{- end }}
+{{- if .Values.postgresql.enabled }}
+  - PostgreSQL (StatefulSet: {{ printf "%s-postgresql" (include "relate-mail.fullname" .) }})
+{{- end }}
+
+Reach the API:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "relate-mail.componentFullname" (list . "api") }} 8080:{{ .Values.api.service.port }}
+  curl http://localhost:8080/healthz
+
+{{- if and .Values.api.enabled .Values.api.ingress.enabled }}
+
+The API is exposed via Ingress at:
+{{- range .Values.api.ingress.hosts }}
+  - http{{ if $.Values.api.ingress.tls }}s{{ end }}://{{ .host }}{{ (index .paths 0).path }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.smtp.mx.enabled }}
+
+WARNING: SMTP MX (port {{ .Values.smtp.mx.port }}) is ENABLED. Make sure smtp.mx.hostedDomains
+is set to the domains you actually host, or this will accept mail for nothing.
+{{- end }}
+
+{{- if and .Values.outbound.enabled (not .Values.outbound.relayHost) }}
+
+WARNING: outbound.enabled=true but outbound.relayHost is empty. The SMTP daemon
+will attempt direct-to-MX delivery from the pod's egress IP. Most providers
+will spam-flag or reject this. Set outbound.relayHost to a smarthost
+(Resend, SES, SendGrid, Mailgun, internal Postfix relay, etc.) for real
+deliverability.
+{{- else if .Values.outbound.relayHost }}
+
+Outbound mail relays through {{ .Values.outbound.relayHost }}:{{ .Values.outbound.relayPort }}{{ if not .Values.outbound.enabled }} (currently disabled — set outbound.enabled=true to dispatch){{ end }}.
+{{- end }}
+
+{{- if .Values.postgresql.enabled }}
+
+NOTE: postgresql.enabled=true deploys a single-replica PostgreSQL — fine for dev,
+but for production prefer an external managed database and set postgresql.enabled=false
+along with database.connectionString or database.existingSecret.
+{{- end }}

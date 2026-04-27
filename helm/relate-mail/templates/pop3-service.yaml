@@ -1,0 +1,31 @@
+{{- if .Values.pop3.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "relate-mail.componentFullname" (list . "pop3") }}
+  labels:
+    {{- include "relate-mail.componentLabels" (list . "pop3") | nindent 4 }}
+  {{- with .Values.pop3.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.pop3.service.type }}
+  {{- if and (eq .Values.pop3.service.type "LoadBalancer") .Values.pop3.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.pop3.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.pop3.service.type "LoadBalancer") .Values.pop3.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.pop3.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    {{- include "relate-mail.componentSelectorLabels" (list . "pop3") | nindent 4 }}
+  ports:
+    - name: pop3
+      port: {{ .Values.pop3.port }}
+      targetPort: pop3
+      protocol: TCP
+    - name: pop3s
+      port: {{ .Values.pop3.securePort }}
+      targetPort: pop3s
+      protocol: TCP
+{{- end }}

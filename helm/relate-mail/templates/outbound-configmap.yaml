@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "relate-mail.outboundConfigName" . }}
+  labels:
+    {{- include "relate-mail.labels" . | nindent 4 }}
+data:
+  OutboundMail__Enabled: {{ .Values.outbound.enabled | quote }}
+  OutboundMail__RelayHost: {{ .Values.outbound.relayHost | quote }}
+  OutboundMail__RelayPort: {{ .Values.outbound.relayPort | quote }}
+  OutboundMail__RelayUseTls: {{ .Values.outbound.relayUseTls | quote }}
+  OutboundMail__RelayUsername: {{ .Values.outbound.relayUsername | quote }}
+  OutboundMail__SenderDomain: {{ .Values.outbound.senderDomain | quote }}
+  OutboundMail__MaxConcurrency: {{ .Values.outbound.maxConcurrency | quote }}
+  OutboundMail__MaxRetries: {{ .Values.outbound.maxRetries | quote }}
+  OutboundMail__RetryBaseDelaySeconds: {{ .Values.outbound.retryBaseDelaySeconds | quote }}
+  OutboundMail__QueuePollingIntervalSeconds: {{ .Values.outbound.queuePollingIntervalSeconds | quote }}
+  OutboundMail__SmtpTimeoutSeconds: {{ .Values.outbound.smtpTimeoutSeconds | quote }}
