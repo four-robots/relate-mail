@@ -137,6 +137,14 @@ migrations:
   backoffLimit: 3
   # Keep finished Jobs around briefly so logs are inspectable, then GC.
   ttlSecondsAfterFinished: 300
+  # Extra environment variables for the migration container. Useful when the
+  # bundle needs runtime-only config that isn't supplied by the chart, e.g.
+  # forcing a write path off a read-only root filesystem.
+  # Example:
+  #   extraEnv:
+  #     - name: DOTNET_BUNDLE_EXTRACT_BASE_DIR
+  #       value: /tmp/.net
+  extraEnv: []
   resources:
     requests:
       cpu: 50m

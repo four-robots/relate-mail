@@ -147,6 +147,13 @@ COPY --from=build /app/migrations/efbundle ./efbundle
 
 USER app
 
+# Self-contained single-file binaries extract their bundled assemblies to a
+# scratch dir on first run. The default is $HOME/.net which fails when the
+# pod's root filesystem is read-only (or when HOME isn't writable). /tmp is
+# always writable, so point the extractor there. See:
+# https://learn.microsoft.com/dotnet/core/deploying/single-file/overview#extract-to-different-location
+ENV DOTNET_BUNDLE_EXTRACT_BASE_DIR=/tmp/.net
+
 # OCI Labels
 LABEL org.opencontainers.image.title="Relate Mail Migrations"
 LABEL org.opencontainers.image.description="EF Core migration bundle for the Relate Mail database schema"
