@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { getConfig } from '@/config'
 import { useSmtpCredentials, useCreateSmtpApiKey, useRevokeSmtpApiKey } from '@/api/hooks'
 import { Button } from '@/components/ui/button'

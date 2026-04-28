@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { useEffect, useCallback, useMemo } from 'react'
 
 export const Route = createFileRoute('/callback')({
