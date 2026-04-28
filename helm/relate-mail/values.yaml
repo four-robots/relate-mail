@@ -91,6 +91,19 @@ internal:
   existingSecret: ""
   existingSecretKey: internalApiKey
 
+# Security settings shared across all hosts.
+# `authenticationSalt` is the HMAC key used by the auth rate limiter to hash
+# usernames + client IPs for tracking failed-login attempts. The .NET API
+# *requires* this in production and refuses to start without it.
+#
+# Provide it inline, via an existing Secret, or leave both empty — the chart
+# will lookup an existing chart-managed Secret across upgrades, and only
+# generate a fresh random salt on the first install.
+security:
+  authenticationSalt: ""
+  existingSecret: ""
+  existingSecretKey: authenticationSalt
+
 # CORS for the API (comma-separated origins).
 cors:
   allowedOrigins: ""
