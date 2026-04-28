@@ -27,6 +27,7 @@ SMTP/POP3/IMAP ports can be exposed via separate `LoadBalancer` Services
 | pop3       | Deployment   | LoadBalancer         | 110, 995                                |
 | imap       | Deployment   | LoadBalancer         | 143, 993                                |
 | web        | Deployment   | ClusterIP            | 8080 (HTTP, disabled by default)        |
+| migrations | Job (hook)   | —                    | runs pre-install / pre-upgrade          |
 | postgresql | StatefulSet  | Headless ClusterIP   | 5432                                    |
 
 The SMTP, POP3, and IMAP hosts each expose an internal HTTP health endpoint
@@ -60,6 +61,25 @@ database:
   existingSecret: relate-mail-db
   existingSecretKey: connectionString
 ```
+
+### Schema migrations
+
+Schema migrations are applied by a Helm `pre-install` / `pre-upgrade` Job
+that runs the `relate-mail-migrations` image — a self-contained EF Core
+migration bundle. The Job runs before any other resource is installed or
+upgraded so the schema is current before the api/protocol pods start
+querying it. The bundle is idempotent and exits 0 with no work when the
+schema is already up to date.
+
+```yaml
+migrations:
+  enabled: true       # set false to skip schema migration on install/upgrade
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300
+```
+
+If you manage migrations out-of-band (e.g. via a CD pipeline before
+`helm upgrade`), set `migrations.enabled: false`.
 
 ## Authentication
 

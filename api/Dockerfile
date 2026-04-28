@@ -44,6 +44,23 @@ RUN dotnet publish src/Relate.Smtp.SmtpHost/Relate.Smtp.SmtpHost.csproj -c Relea
 RUN dotnet publish src/Relate.Smtp.Pop3Host/Relate.Smtp.Pop3Host.csproj -c Release -o /app/pop3
 RUN dotnet publish src/Relate.Smtp.ImapHost/Relate.Smtp.ImapHost.csproj -c Release -o /app/imap
 
+# Build a self-contained EF Core migrations bundle. The bundle is a single
+# executable that applies pending migrations against a target connection
+# string passed via --connection, with no SDK or EF tools required at runtime.
+ARG TARGETARCH
+RUN dotnet tool install -g dotnet-ef --version 10.* \
+    && case "$TARGETARCH" in \
+        amd64) RID=linux-musl-x64 ;; \
+        arm64) RID=linux-musl-arm64 ;; \
+        *) echo "Unsupported TARGETARCH: $TARGETARCH" && exit 1 ;; \
+       esac \
+    && /root/.dotnet/tools/dotnet-ef migrations bundle \
+        --project src/Relate.Smtp.Infrastructure \
+        --startup-project src/Relate.Smtp.Api \
+        --self-contained \
+        -r "$RID" \
+        -o /app/migrations/efbundle
+
 # API runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:8c7671a6f0f984d0c102ee70d61e8010857de032b320561dea97cc5781aea5f8 AS api
 WORKDIR /app
@@ -119,6 +136,24 @@ LABEL org.opencontainers.image.source="https://github.com/four-robots/relate-mai
 EXPOSE 143 993 8083
 ENV HealthCheck__Url=http://+:8083
 ENTRYPOINT ["dotnet", "Relate.Smtp.ImapHost.dll"]
+
+# EF Core migrations runtime image. Tiny image containing just the self-contained
+# migration bundle. Used by the chart's pre-install/pre-upgrade Job to bring the
+# database schema up to date before the API/protocol pods start.
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0-alpine@sha256:4f08c162590324de60f31937f5b5fa9f2b5eddaa4f0aaec3c872f855bf16c36c AS migrations
+WORKDIR /app
+
+COPY --from=build /app/migrations/efbundle ./efbundle
+
+USER app
+
+# OCI Labels
+LABEL org.opencontainers.image.title="Relate Mail Migrations"
+LABEL org.opencontainers.image.description="EF Core migration bundle for the Relate Mail database schema"
+LABEL org.opencontainers.image.vendor="Relate Mail"
+LABEL org.opencontainers.image.source="https://github.com/four-robots/relate-mail"
+
+ENTRYPOINT ["./efbundle"]
 
 # Web (SPA) runtime image — separate from the API image so it can roll independently.
 # nginxinc/nginx-unprivileged runs as UID 101 and listens on 8080 by default, so no
