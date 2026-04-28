@@ -54,6 +54,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "relate-mail.dbSecretName" . }}
                   key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Security__AuthenticationSalt
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.securitySecretName" . }}
+                  key: {{ include "relate-mail.securitySecretKey" . }}
             - name: Imap__ServerName
               value: {{ .Values.imap.serverName | quote }}
             - name: Imap__Port

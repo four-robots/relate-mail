@@ -153,6 +153,50 @@ internalApiKey
 {{- end -}}
 
 {{/*
+Security/authentication-salt secret name + key, mirroring the internal pattern.
+*/}}
+{{- define "relate-mail.securitySecretName" -}}
+{{- if .Values.security.existingSecret -}}
+{{- .Values.security.existingSecret -}}
+{{- else -}}
+{{- printf "%s-security" (include "relate-mail.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "relate-mail.securitySecretKey" -}}
+{{- if .Values.security.existingSecret -}}
+{{- .Values.security.existingSecretKey | default "authenticationSalt" -}}
+{{- else -}}
+authenticationSalt
+{{- end -}}
+{{- end -}}
+
+{{/*
+Resolve the authentication salt. Priority:
+  1) explicit security.authenticationSalt
+  2) existing chart-managed Secret (preserves the salt across upgrades)
+  3) freshly-generated random 32-char alphanum
+A regenerated salt only resets rate-limit counters; it doesn't invalidate user
+auth or sessions, so an occasional rotation (e.g. on a Pulumi-style fresh
+template render) is harmless.
+*/}}
+{{- define "relate-mail.authenticationSalt" -}}
+{{- if .Values.security.authenticationSalt -}}
+{{- .Values.security.authenticationSalt -}}
+{{- else if .Values.security.existingSecret -}}
+{{- /* Caller-supplied secret; we don't read it, the env var binds at runtime. */ -}}
+{{- else -}}
+{{- $secretName := printf "%s-security" (include "relate-mail.fullname" .) -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing $existing.data (index $existing.data "authenticationSalt") -}}
+{{- index $existing.data "authenticationSalt" | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Outbound relay password secret name/key.
 */}}
 {{- define "relate-mail.outboundSecretName" -}}

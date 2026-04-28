@@ -59,6 +59,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "relate-mail.dbSecretName" . }}
                   key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Security__AuthenticationSalt
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.securitySecretName" . }}
+                  key: {{ include "relate-mail.securitySecretKey" . }}
             - name: Smtp__ServerName
               value: {{ .Values.smtp.serverName | quote }}
             - name: Smtp__Port

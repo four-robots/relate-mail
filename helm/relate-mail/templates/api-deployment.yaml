@@ -50,6 +50,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "relate-mail.dbSecretName" . }}
                   key: {{ include "relate-mail.dbSecretKey" . }}
+            - name: Security__AuthenticationSalt
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "relate-mail.securitySecretName" . }}
+                  key: {{ include "relate-mail.securitySecretKey" . }}
             {{- if .Values.oidc.authority }}
             - name: Oidc__Authority
               value: {{ .Values.oidc.authority | quote }}
