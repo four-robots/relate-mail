@@ -123,6 +123,28 @@ outbound:
   queuePollingIntervalSeconds: 15
   smtpTimeoutSeconds: 30
 
+# EF Core schema migrations.
+# Runs as a Helm pre-install/pre-upgrade Job that applies pending migrations
+# against the target database before the API/protocol pods start. The image
+# is a self-contained EF Core migration bundle — no SDK or EF tools required
+# at runtime, and idempotent (safe to re-run).
+migrations:
+  enabled: true
+  image:
+    repository: ""             # falls back to {{ image.registry }}/{{ image.repository }}-migrations
+    tag: ""
+  # Helm will retry the Job up to backoffLimit times before failing the release.
+  backoffLimit: 3
+  # Keep finished Jobs around briefly so logs are inspectable, then GC.
+  ttlSecondsAfterFinished: 300
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
 # REST API workload.
 api:
   enabled: true

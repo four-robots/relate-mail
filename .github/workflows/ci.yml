@@ -452,6 +452,8 @@ jobs:
             target: imap
           - name: web
             target: web
+          - name: migrations
+            target: migrations
 
     steps:
       - name: Checkout repository
