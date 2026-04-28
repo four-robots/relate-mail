@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { getConfig } from '@/config'
 import { useProfile, useUpdateProfile, useAddEmailAddress, useRemoveEmailAddress, useSendVerification, useVerifyEmailAddress } from '@/api/hooks'
 import { Button } from '@/components/ui/button'

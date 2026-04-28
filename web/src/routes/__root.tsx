@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createRootRoute, Link, Outlet, useLocation } from '@tanstack/react-router'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { Mail, User, LogOut, Menu, X, PenSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/hooks/use-theme'

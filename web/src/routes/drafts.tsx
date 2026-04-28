@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { getConfig } from '@/config'
 import { useDrafts, useDeleteDraft, useSendDraft } from '@/api/hooks'
 import { Button } from '@/components/ui/button'

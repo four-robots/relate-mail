@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useAuth } from 'react-oidc-context'
+import { useAuth } from '@/auth/useAuth'
 import { getConfig } from '@/config'
 import { usePreferences, useUpdatePreferences } from '@/api/hooks'
 import { usePushNotifications } from '@/hooks/use-push-notifications'
