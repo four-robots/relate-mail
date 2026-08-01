@@ -58,7 +58,7 @@
     "globals": "^17.2.0",
     "happy-dom": "^20.8.8",
     "msw": "^2.12.7",
-    "postcss": "^8.5.12",
+    "postcss": "^8.5.25",
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.54.0",
